@@ -1,0 +1,4 @@
+/home/popbox/projects/cpp/opengl_fun/cmake-build-debug/CMakeFiles/glad.dir
+/home/popbox/projects/cpp/opengl_fun/cmake-build-debug/CMakeFiles/opengl_fun.dir
+/home/popbox/projects/cpp/opengl_fun/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/popbox/projects/cpp/opengl_fun/cmake-build-debug/CMakeFiles/rebuild_cache.dir
