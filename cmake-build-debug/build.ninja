@@ -84,7 +84,14 @@ build cmake_object_order_depends_target_opengl_fun: phony || cmake_object_order_
 build CMakeFiles/opengl_fun.dir/src/main.cpp.o: CXX_COMPILER__opengl_fun_unscanned_Debug /home/popbox/projects/cpp/opengl_fun/src/main.cpp || cmake_object_order_depends_target_opengl_fun
   DEP_FILE = CMakeFiles/opengl_fun.dir/src/main.cpp.o.d
   FLAGS = -g -std=gnu++17 -fdiagnostics-color=always
-  INCLUDES = -I/home/popbox/projects/cpp/opengl_fun/external/glad/include
+  INCLUDES = -I/home/popbox/projects/cpp/opengl_fun/external/glad/include -I/home/popbox/projects/cpp/opengl_fun/include
+  OBJECT_DIR = CMakeFiles/opengl_fun.dir
+  OBJECT_FILE_DIR = CMakeFiles/opengl_fun.dir/src
+
+build CMakeFiles/opengl_fun.dir/src/shader_loader.cpp.o: CXX_COMPILER__opengl_fun_unscanned_Debug /home/popbox/projects/cpp/opengl_fun/src/shader_loader.cpp || cmake_object_order_depends_target_opengl_fun
+  DEP_FILE = CMakeFiles/opengl_fun.dir/src/shader_loader.cpp.o.d
+  FLAGS = -g -std=gnu++17 -fdiagnostics-color=always
+  INCLUDES = -I/home/popbox/projects/cpp/opengl_fun/external/glad/include -I/home/popbox/projects/cpp/opengl_fun/include
   OBJECT_DIR = CMakeFiles/opengl_fun.dir
   OBJECT_FILE_DIR = CMakeFiles/opengl_fun.dir/src
 
@@ -96,7 +103,7 @@ build CMakeFiles/opengl_fun.dir/src/main.cpp.o: CXX_COMPILER__opengl_fun_unscann
 #############################################
 # Link the executable opengl_fun
 
-build opengl_fun: CXX_EXECUTABLE_LINKER__opengl_fun_Debug CMakeFiles/opengl_fun.dir/src/main.cpp.o | /usr/lib/x86_64-linux-gnu/libglfw.so.3.3 libglad.a /usr/lib/x86_64-linux-gnu/libGLX.so /usr/lib/x86_64-linux-gnu/libOpenGL.so || libglad.a
+build opengl_fun: CXX_EXECUTABLE_LINKER__opengl_fun_Debug CMakeFiles/opengl_fun.dir/src/main.cpp.o CMakeFiles/opengl_fun.dir/src/shader_loader.cpp.o | /usr/lib/x86_64-linux-gnu/libglfw.so.3.3 libglad.a /usr/lib/x86_64-linux-gnu/libGLX.so /usr/lib/x86_64-linux-gnu/libOpenGL.so || libglad.a
   FLAGS = -g
   LINK_LIBRARIES = /usr/lib/x86_64-linux-gnu/libglfw.so.3.3  libglad.a  /usr/lib/x86_64-linux-gnu/libGLX.so  /usr/lib/x86_64-linux-gnu/libOpenGL.so
   OBJECT_DIR = CMakeFiles/opengl_fun.dir
