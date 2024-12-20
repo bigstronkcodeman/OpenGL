@@ -184,9 +184,9 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     else if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-        mixValue += 0.01;
+        mixValue = std::min(1.0f, mixValue + 0.01f);
     else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-        mixValue -= 0.01;
+        mixValue = std::max(0.0f, mixValue - 0.01f);
 
 }
 
