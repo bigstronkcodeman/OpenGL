@@ -15,6 +15,9 @@ void processInput(GLFWwindow *window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
+// globals (mutable)
+float mixValue = 0.0;
+
 int main() {
     // glfw: initialize and configure
     // ------------------------------
@@ -142,6 +145,7 @@ int main() {
 
         // render
         // ------
+        ourShader.setFloat("mixin", mixValue);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -179,6 +183,11 @@ void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+    else if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        mixValue += 0.01;
+    else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        mixValue -= 0.01;
+
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
