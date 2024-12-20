@@ -18,7 +18,9 @@ target_include_directories(glad PUBLIC
 # Main executable
 add_executable(${PROJECT_NAME} src/main.cpp
         include/shader_loader.h
-        src/shader_loader.cpp)
+        src/shader_loader.cpp
+        include/stb_image.h
+        src/stb_image.cpp)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
         external/glad/include

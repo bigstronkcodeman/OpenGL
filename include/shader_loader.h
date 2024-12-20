@@ -5,6 +5,8 @@
 #ifndef SHADER_LOADER_H
 #define SHADER_LOADER_H
 
+#include <string>
+
 struct ShaderLoader {
     unsigned int ID;
     ShaderLoader(const char* vertex_shader_path, const char* fragment_shader_path);
