@@ -81,22 +81,66 @@ ShaderLoader::ShaderLoader(const char* vertexShaderPath, const char* fragmentSha
     glDeleteShader(fragmentShader);
 }
 
-void ShaderLoader::use() {
+void ShaderLoader::use() const {
     glUseProgram(this->ID);
 }
 
-void ShaderLoader::setBool(const std::string& name, bool value) const {
-    glUniform1i(glGetUniformLocation(this->ID, name.c_str()), (int)value);
+void ShaderLoader::setBool(const std::string &name, bool value) const
+{
+    glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);
 }
 
-void ShaderLoader::setInt(const std::string& name, int value) const {
-    glUniform1i(glGetUniformLocation(this->ID, name.c_str()), value);
+void ShaderLoader::setInt(const std::string &name, int value) const
+{
+    glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
 }
 
-void ShaderLoader::setFloat(const std::string& name, float value) const {
-    glUniform1f(glGetUniformLocation(this->ID, name.c_str()), value);
+void ShaderLoader::setFloat(const std::string &name, float value) const
+{
+    glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
 }
 
-void ShaderLoader::setDouble(const std::string& name, double value) const {
-    glUniform1d(glGetUniformLocation(this->ID, name.c_str()), value);
+void ShaderLoader::setVec2(const std::string &name, const glm::vec2 &value) const
+{
+    glUniform2fv(glGetUniformLocation(ID, name.c_str()), 1, &value[0]);
+}
+
+void ShaderLoader::setVec2(const std::string &name, float x, float y) const
+{
+    glUniform2f(glGetUniformLocation(ID, name.c_str()), x, y);
+}
+
+void ShaderLoader::setVec3(const std::string &name, const glm::vec3 &value) const
+{
+    glUniform3fv(glGetUniformLocation(ID, name.c_str()), 1, &value[0]);
+}
+
+void ShaderLoader::setVec3(const std::string &name, float x, float y, float z) const
+{
+    glUniform3f(glGetUniformLocation(ID, name.c_str()), x, y, z);
+}
+
+void ShaderLoader::setVec4(const std::string &name, const glm::vec4 &value) const
+{
+    glUniform4fv(glGetUniformLocation(ID, name.c_str()), 1, &value[0]);
+}
+
+void ShaderLoader::setVec4(const std::string &name, float x, float y, float z, float w) const
+{
+    glUniform4f(glGetUniformLocation(ID, name.c_str()), x, y, z, w);
+}
+
+void ShaderLoader::setMat2(const std::string &name, const glm::mat2 &mat) const
+{
+    glUniformMatrix2fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+}
+
+void ShaderLoader::setMat3(const std::string &name, const glm::mat3 &mat) const
+{
+    glUniformMatrix3fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+}
+
+void ShaderLoader::setMat4(const std::string &name, const glm::mat4 &mat) const
+{
+    glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
