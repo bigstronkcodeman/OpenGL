@@ -20,7 +20,9 @@ add_executable(${PROJECT_NAME} src/main.cpp
         include/shader_loader.h
         src/shader_loader.cpp
         include/stb_image.h
-        src/stb_image.cpp)
+        src/stb_image.cpp
+        include/camera.h
+        src/camera.cpp)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
         external/glad/include
