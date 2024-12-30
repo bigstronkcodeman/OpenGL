@@ -8,9 +8,9 @@
 #include <string>
 #include <glm/glm.hpp>
 
-struct ShaderLoader {
+struct Shader {
     unsigned int ID;
-    ShaderLoader(const char* vertex_shader_path, const char* fragment_shader_path);
+    Shader(const char* vertex_shader_path, const char* fragment_shader_path);
     void use() const;
     void setBool(const std::string &name, bool value) const;
     void setInt(const std::string &name, int value) const;

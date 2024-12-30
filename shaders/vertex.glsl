@@ -1,16 +1,21 @@
-#version 420
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec2 aTexCoord;
+#version 430
 
-out vec2 TexCoord;
+struct Particle {
+    vec4 position;
+    vec4 velocity;
+    float mass;
+    float padding[3];
+};
 
-//uniform mat4 transform;
-uniform mat4 model;
+layout(std430, binding = 0) buffer ParticleBuffer {
+    Particle particles[];
+};
+
 uniform mat4 view;
 uniform mat4 projection;
 
-void main()
-{
-    gl_Position = projection * view * model * vec4(aPos, 1.0f);
-    TexCoord = vec2(aTexCoord.x, aTexCoord.y);
+void main() {
+    vec4 pos = particles[gl_VertexID].position;
+    gl_Position = projection * view * pos;
+    gl_PointSize = particles[gl_VertexID].mass / 100.0f + 1.0f;
 }
