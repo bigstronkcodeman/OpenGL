@@ -129,7 +129,7 @@ int main() {
 
         glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
-        camera.yaw += 0.02f;
+        camera.yaw += .015f;
 
         std::cout << "camera forward: " << camera.forward << '\n';
         std::cout << "camera position: " << camera.position << '\n';
