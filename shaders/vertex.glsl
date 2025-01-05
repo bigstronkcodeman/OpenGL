@@ -1,9 +1,25 @@
-#version 420
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aColor;
-out vec3 ourColor;
+#version 430
+
+struct Particle {
+    vec4 position;
+    vec4 velocity;
+    float mass;
+    float padding[3];
+};
+
+layout(std430, binding = 0) buffer ParticleBuffer {
+    Particle particles[];
+};
+
+out vec4 velocity;
+
+//uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
 void main() {
-   gl_Position = vec4(aPos, 1.0);
-   ourColor = aColor;
+    vec4 pos = particles[gl_VertexID].position;
+    gl_Position = projection * view * pos;
+    gl_PointSize = particles[gl_VertexID].mass / 100000.0f + 1.0f;
+    velocity = particles[gl_VertexID].velocity;
 }

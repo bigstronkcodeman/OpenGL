@@ -1,9 +1,11 @@
-#version 420
-out vec4 FragColor;
-in vec3 ourColor;
+#version 430
 
-uniform float someUniform;
+in vec4 velocity;
+
+out vec4 FragColor;
 
 void main() {
-   FragColor = vec4(cos(someUniform) / 2.0f, tan(someUniform) / 2.0f, sin(someUniform) / 2.0f, 1.0f);
+//    FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    vec4 normalizedVelocity = normalize(velocity);
+    FragColor = vec4(normalizedVelocity.x, normalizedVelocity.y, normalizedVelocity.z, 1.0f) * 20.0f;
 }

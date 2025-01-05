@@ -17,8 +17,17 @@ target_include_directories(glad PUBLIC
 
 # Main executable
 add_executable(${PROJECT_NAME} src/main.cpp
-        include/shader_loader.h
-        src/shader_loader.cpp)
+        include/shader.h
+        src/shader.cpp
+        include/stb_image.h
+        src/stb_image.cpp
+        include/camera.h
+        src/camera.cpp
+        include/particle.h
+        include/compute_shader.h
+        src/compute_shader.cpp
+        include/particle_system.h
+        src/particle_system.cpp)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
         external/glad/include
