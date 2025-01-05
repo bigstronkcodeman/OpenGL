@@ -9,7 +9,7 @@ ParticleSystem::ParticleSystem(Shader* pipelineShaders, ComputeShader* computeSh
     std::default_random_engine generator(1294);
     std::uniform_real_distribution<float> distribution(-1, 1);
     std::uniform_real_distribution<float> distribution2(-0.3, 0.3);
-    std::uniform_real_distribution<float> massDistribution(50000.0f, 100000.0f);
+    std::uniform_real_distribution<float> massDistribution(5000.0f, 200000.0f);
 
     for (int i = 0; i < NUM_PARTICLES; i++) {
         glm::vec3 position;

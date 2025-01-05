@@ -120,19 +120,19 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // create transformations
-        glm::vec3 cameraPos(2.0f * cos(camera.yaw), 0.0f, 2.0f * sin(camera.yaw));
+        glm::vec3 cameraPos(1.4f * cos(camera.yaw), 0.0f, 1.4f * sin(camera.yaw));
         camera.position = cameraPos;
         camera.forward = -glm::normalize(cameraPos);
         camera.right = glm::normalize(glm::cross(camera.forward, camera.worldUp));
         camera.up = glm::cross(camera.right, camera.forward);
+        camera.yaw += .015f;
         glm::mat4 view = camera.getViewTransform();
 
         glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
-        camera.yaw += .015f;
 
-        std::cout << "camera forward: " << camera.forward << '\n';
-        std::cout << "camera position: " << camera.position << '\n';
+        // std::cout << "camera forward: " << camera.forward << '\n';
+        // std::cout << "camera position: " << camera.position << '\n';
 
         particleSystem.update(deltaTime);
         particleSystem.render(view, projection);
@@ -167,6 +167,11 @@ void processInput(GLFWwindow *window) {
         camera.processKeyboardInput(CameraDirection::UP, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         camera.processKeyboardInput(CameraDirection::DOWN, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        camera.speed += 0.01f;
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        camera.speed -= 0.01f;
+
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes

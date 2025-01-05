@@ -16,7 +16,7 @@ uniform float deltaTime;
 const float G = 6.67430e-11;
 //const float G = 0.0000000002;
 const float softening = 0.1;
-const float drag = 0.1;
+const float drag = 0.05;
 
 void main() {
     uint index = gl_GlobalInvocationID.x;
@@ -39,8 +39,7 @@ void main() {
         vec3 dir = otherPos - pos;
         float distSqr = dot(dir, dir) + softening;
 
-        totalForce += normalize(dir) * G * mass * otherMass / distSqr;
-        totalForce += dragForce;
+        totalForce += (normalize(dir) * G * mass * otherMass / distSqr) + dragForce;
     }
 
 
