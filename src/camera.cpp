@@ -3,6 +3,7 @@
 //
 
 #include "camera.h"
+#include <ostream>
 
 FirstPersonCamera::FirstPersonCamera(glm::vec3 position, glm::vec3 direction, glm::vec3 worldUp,
                                      float yaw, float pitch, float speed, float mouseSensitivity, float fov)
@@ -68,5 +69,5 @@ void FirstPersonCamera::updateVectors() {
     forward = glm::normalize(forward);
 
     right = -glm::normalize(glm::cross(forward, worldUp));
-    up = glm::normalize(glm::cross(right, forward));
+    up = glm::cross(right, forward);
 }

@@ -17,12 +17,13 @@ class ParticleSystem {
     GLuint vao;
     GLuint shaderStorageBufferObject;
     std::vector<Particle> particles;
-    const int NUM_PARTICLES = 13000;
+    const int NUM_PARTICLES = 10000;
 
 public:
     ParticleSystem(Shader* pipelineShaders, ComputeShader* computeShader);
     void update(float deltaTime);
     void render(const glm::mat4& view, const glm::mat4& projection);
+    void render(const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection);
 };
 
 #endif //PARTICLESYSTEM_H

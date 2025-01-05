@@ -23,7 +23,7 @@ namespace CameraDefaults {
     const glm::vec3 RIGHT = glm::normalize(glm::cross(UP, DIRECTION));
     const float INITIAL_YAW = -90.0f;
     const float INITIAL_PITCH = 0.0f;
-    const float DEFAULT_SPEED = 4.5f;
+    const float DEFAULT_SPEED = 2.5f;
     const float DEFAULT_MOUSE_SENSITIVITY = 0.05f;
     const float INITIAL_FOV = 45.0f;
 };
@@ -51,7 +51,7 @@ public:
     void processKeyboardInput(CameraDirection direction, float deltaTime);
     glm::mat4 getViewTransform() const;
 
-private:
+// private:
     void updateVectors();
 };
 

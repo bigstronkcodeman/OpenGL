@@ -19,8 +19,8 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
 // settings
-const unsigned int SCR_WIDTH = 1500;
-const unsigned int SCR_HEIGHT = 1200;
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
 
 // camera
 FirstPersonCamera camera(glm::vec3(0.0f, 0.0f, 3.0f),
@@ -90,6 +90,10 @@ GLFWwindow* initializeGlfwWindow() {
     return window;
 }
 
+std::ostream& operator<<(std::ostream& os, const glm::vec3& vec) {
+    return os << '(' << vec.x << ", " << vec.y << ", " << vec.z << ')';
+}
+
 int main() {
     GLFWwindow *window = initializeGlfwWindow();
 
@@ -116,8 +120,19 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // create transformations
+        glm::vec3 cameraPos(2.0f * cos(camera.yaw), 0.0f, 2.0f * sin(camera.yaw));
+        camera.position = cameraPos;
+        camera.forward = -glm::normalize(cameraPos);
+        camera.right = glm::normalize(glm::cross(camera.forward, camera.worldUp));
+        camera.up = glm::cross(camera.right, camera.forward);
         glm::mat4 view = camera.getViewTransform();
+
         glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+
+        camera.yaw += 0.02f;
+
+        std::cout << "camera forward: " << camera.forward << '\n';
+        std::cout << "camera position: " << camera.position << '\n';
 
         particleSystem.update(deltaTime);
         particleSystem.render(view, projection);
