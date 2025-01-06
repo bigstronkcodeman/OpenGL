@@ -6,10 +6,10 @@
 #include <random>
 
 ParticleSystem::ParticleSystem(Shader* pipelineShaders, ComputeShader* computeShader) : pipelineShaders(pipelineShaders), computeShader(computeShader) {
-    std::default_random_engine generator(1294);
+    std::default_random_engine generator(1244);
     std::uniform_real_distribution<float> distribution(-1, 1);
     std::uniform_real_distribution<float> distribution2(-0.3, 0.3);
-    std::uniform_real_distribution<float> massDistribution(5000.0f, 200000.0f);
+    std::uniform_real_distribution<float> massDistribution(5000.0f, 100000.0f);
 
     for (int i = 0; i < NUM_PARTICLES; i++) {
         glm::vec3 position;
@@ -25,6 +25,9 @@ ParticleSystem::ParticleSystem(Shader* pipelineShaders, ComputeShader* computeSh
 
         Particle p;
         p.position = glm::vec4(position, 1.0f);
+        for (auto & previousPosition : p.previousPositions) {
+            previousPosition = p.position;
+        }
         glm::vec3 tangent = glm::normalize(glm::cross(glm::vec3(p.position.x, p.position.y, p.position.z), glm::vec3(0.0f, 0.0f, 1.0f))) * 0.05f;
         p.velocity = glm::vec4(tangent.x, tangent.y, tangent.z, 0.0f);
         p.mass = massDistribution(generator);
@@ -43,10 +46,10 @@ ParticleSystem::ParticleSystem(Shader* pipelineShaders, ComputeShader* computeSh
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, shaderStorageBufferObject);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)offsetof(Particle, position));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)offsetof(Particle, velocity));
+    // glEnableVertexAttribArray(0);
+    // glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)offsetof(Particle, position));
+    // glEnableVertexAttribArray(1);
+    // glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)offsetof(Particle, velocity));
 }
 
 void ParticleSystem::update(float deltaTime) {
@@ -61,7 +64,7 @@ void ParticleSystem::render(const glm::mat4& view, const glm::mat4& projection) 
     pipelineShaders->setMat4("view", view);
     pipelineShaders->setMat4("projection", projection);
     glBindVertexArray(vao);
-    glDrawArrays(GL_POINTS, 0, particles.size());
+    glDrawArrays(GL_POINTS, 0, particles.size() * 17);
 }
 
 void ParticleSystem::render(const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) {
@@ -70,5 +73,5 @@ void ParticleSystem::render(const glm::mat4& model, const glm::mat4& view, const
     pipelineShaders->setMat4("view", view);
     pipelineShaders->setMat4("projection", projection);
     glBindVertexArray(vao);
-    glDrawArrays(GL_POINTS, 0, particles.size());
+    glDrawArrays(GL_POINTS, 0, particles.size() * 17);
 }

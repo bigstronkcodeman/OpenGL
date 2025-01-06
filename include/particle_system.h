@@ -17,7 +17,7 @@ class ParticleSystem {
     GLuint vao;
     GLuint shaderStorageBufferObject;
     std::vector<Particle> particles;
-    const int NUM_PARTICLES = 30000;
+    const int NUM_PARTICLES = 3000;
 
 public:
     ParticleSystem(Shader* pipelineShaders, ComputeShader* computeShader);

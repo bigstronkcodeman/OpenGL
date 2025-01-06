@@ -5,7 +5,24 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(OpenGL REQUIRED)
-find_package(glfw3 REQUIRED)
+
+if(WIN32)
+    message(STATUS "Building for Windows with vcpkg")
+    set(CMAKE_TOOLCHAIN_FILE "[path/to/vcpkg]/scripts/buildsystems/vcpkg.cmake")
+    find_package(glfw3 REQUIRED)
+    set(GLFW_LIBRARY glfw3)
+elseif(UNIX)
+    message(STATUS "Building for Linux/UNIX")
+    find_package(glfw3 REQUIRED)
+    set(GLFW_LIBRARY glfw)
+else()
+    message(FATAL_ERROR "Unsupported platform")
+endif()
+
+
+# Include directories (common for both platforms)
+include_directories(${GLFW_INCLUDE_DIR})
+
 
 # Add GLAD
 add_library(glad STATIC
@@ -36,6 +53,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 target_link_libraries(${PROJECT_NAME}
         OpenGL::GL
-        glfw
+        ${GLFW_LIBRARY}
         glad
 )

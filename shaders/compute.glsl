@@ -6,6 +6,7 @@ struct Particle {
     vec4 velocity;
     float mass;
     float padding[3];
+    vec4 previousPositions[16];
 };
 
 layout(std430, binding = 0) buffer ParticleBuffer {
@@ -13,10 +14,9 @@ layout(std430, binding = 0) buffer ParticleBuffer {
 };
 
 uniform float deltaTime;
-const float G = 6.67430e-11;
-//const float G = 0.0000000002;
-const float softening = 0.1;
-const float drag = 0.05;
+const float G = 6.67430e-10;
+const float softening = 0.15;
+const float drag = 0.01;
 
 void main() {
     uint index = gl_GlobalInvocationID.x;
@@ -48,5 +48,11 @@ void main() {
     vec3 newPos = pos + newVel * deltaTime;
 
     particles[index].velocity.xyz = newVel;
+
+    for (int i = 15; i > 0; i--) {
+        particles[index].previousPositions[i] = particles[index].previousPositions[i-1];
+    }
+    particles[index].previousPositions[0] = particles[index].position;
+
     particles[index].position.xyz = newPos;
 }

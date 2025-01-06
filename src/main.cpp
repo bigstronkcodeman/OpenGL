@@ -76,8 +76,8 @@ GLFWwindow* initializeGlfwWindow() {
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
@@ -105,6 +105,8 @@ int main() {
     // activate depth buffer culling
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_PROGRAM_POINT_SIZE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // render loop
     float currentFrame;
@@ -120,12 +122,12 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // create transformations
-        glm::vec3 cameraPos(1.4f * cos(camera.yaw), 0.0f, 1.4f * sin(camera.yaw));
+        glm::vec3 cameraPos(2.0f * std::cos(camera.yaw), 0.0f, 2.0f * std::sin(camera.yaw));
         camera.position = cameraPos;
         camera.forward = -glm::normalize(cameraPos);
         camera.right = glm::normalize(glm::cross(camera.forward, camera.worldUp));
         camera.up = glm::cross(camera.right, camera.forward);
-        camera.yaw += .015f;
+        camera.yaw += .01f;
         glm::mat4 view = camera.getViewTransform();
 
         glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
