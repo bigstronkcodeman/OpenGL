@@ -35,7 +35,7 @@ void main() {
 
     gl_Position = projection * view * pos;
 
-    float baseSize = particles[particleIndex].mass / 100000.0 + 1.0;
+    float baseSize = particles[particleIndex].mass / 100000.0 + 0.1;
     gl_PointSize = baseSize * (trailIndex == 0 ? 1.0 : (1.0 - float(trailIndex) / 17.0));
 
     velocity = particles[particleIndex].velocity;

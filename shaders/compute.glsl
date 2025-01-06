@@ -14,9 +14,9 @@ layout(std430, binding = 0) buffer ParticleBuffer {
 };
 
 uniform float deltaTime;
-const float G = 6.67430e-10;
-const float softening = 0.15;
-const float drag = 0.01;
+const float G = 6.67430e-11;
+const float softening = 0.2;
+const float drag = 0.001;
 
 void main() {
     uint index = gl_GlobalInvocationID.x;

@@ -19,8 +19,8 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
 // settings
-const unsigned int SCR_WIDTH = 1920;
-const unsigned int SCR_HEIGHT = 1080;
+const unsigned int SCR_WIDTH = 3840;
+const unsigned int SCR_HEIGHT = 2160;
 
 // camera
 FirstPersonCamera camera(glm::vec3(0.0f, 0.0f, 3.0f),
@@ -77,7 +77,7 @@ GLFWwindow* initializeGlfwWindow() {
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
@@ -127,7 +127,7 @@ int main() {
         camera.forward = -glm::normalize(cameraPos);
         camera.right = glm::normalize(glm::cross(camera.forward, camera.worldUp));
         camera.up = glm::cross(camera.right, camera.forward);
-        camera.yaw += .01f;
+        camera.yaw += .001f;
         glm::mat4 view = camera.getViewTransform();
 
         glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
