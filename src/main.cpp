@@ -127,7 +127,7 @@ int main() {
         camera.forward = -glm::normalize(cameraPos);
         camera.right = glm::normalize(glm::cross(camera.forward, camera.worldUp));
         camera.up = glm::cross(camera.right, camera.forward);
-        camera.yaw += .001f;
+        camera.yaw += .004f;
         glm::mat4 view = camera.getViewTransform();
 
         glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);

@@ -9,17 +9,17 @@
 enum class DistributionType {
     TANGENTIAL_DONUT,
     SPIRAL_GALAXY,
-    COLLIDING_GALAXIES,
+    COLLIDING_WHEELS,
     SPHERICAL_SHELL,
     BINARY_SYSTEM
 };
 
-constexpr DistributionType type = DistributionType::COLLIDING_GALAXIES;
+constexpr DistributionType type = DistributionType::SPHERICAL_SHELL;
 
 ParticleSystem::ParticleSystem(Shader* pipelineShaders, ComputeShader* computeShader)
         : pipelineShaders(pipelineShaders), computeShader(computeShader) {
 
-    std::default_random_engine generator(1244);
+    std::default_random_engine generator(12448);
 
 
     for (int i = 0; i < NUM_PARTICLES; i++) {
@@ -65,7 +65,7 @@ ParticleSystem::ParticleSystem(Shader* pipelineShaders, ComputeShader* computeSh
                 break;
             }
 
-            case DistributionType::COLLIDING_GALAXIES: {
+            case DistributionType::COLLIDING_WHEELS: {
                 std::uniform_real_distribution<float> radius_dist(0.0f, 0.3f);
                 std::uniform_real_distribution<float> angle_dist(0.0f, 2.0f * M_PI);
                 std::uniform_real_distribution<float> z_dist(-0.1f, 0.1f);
@@ -82,7 +82,7 @@ ParticleSystem::ParticleSystem(Shader* pipelineShaders, ComputeShader* computeSh
                         radius * cos(angle),
                         radius * sin(angle),
                         z_dist(generator)
-                );
+                ) * (inFirstGalaxy ? 1.0f : 2.0f);
 
                 glm::vec3 baseVelocity = inFirstGalaxy ?
                                          glm::vec3(0.02f, 0.0f, 0.0f) :
@@ -95,7 +95,9 @@ ParticleSystem::ParticleSystem(Shader* pipelineShaders, ComputeShader* computeSh
             case DistributionType::SPHERICAL_SHELL: {
                 std::uniform_real_distribution<float> phi_dist(0.0f, 2.0f * M_PI);
                 std::uniform_real_distribution<float> costheta_dist(-1.0f, 1.0f);
-                std::uniform_real_distribution<float> mass_dist(500.0f, 10000.0f);
+                std::uniform_real_distribution<float> mass_dist(500.0f, 20000.0f);
+                std::uniform_real_distribution<float> vel_dist(0.0f, 0.03f);
+
 
                 float phi = phi_dist(generator);
                 float theta = acos(costheta_dist(generator));
@@ -107,7 +109,7 @@ ParticleSystem::ParticleSystem(Shader* pipelineShaders, ComputeShader* computeSh
                         r * cos(theta)
                 );
 
-                velocity = -position * 0.01f;  // Slight inward velocity for collapse
+                velocity = -position * 0.01f ;  // Slight inward velocity for collapse
                 p.mass = mass_dist(generator);
                 break;
             }

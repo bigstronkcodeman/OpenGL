@@ -7,7 +7,7 @@ out vec4 FragColor;
 
 const vec3 COLOR_BLUE = vec3(0.4, 0.0, 1.0);
 const vec3 COLOR_RED = vec3(0.0, 1.0, 0.25);
-const float MAX_SPEED = 0.5;
+const float MAX_SPEED = 0.1;
 
 void main() {
     float speed = length(velocity.xyz);
