@@ -5,6 +5,7 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
+#include <glad/glad.h>
 #include <glm/glm.hpp>
 
 constexpr GLuint POSITION_HISTORY_SIZE = 16;

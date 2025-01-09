@@ -19,8 +19,8 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
 // settings
-const unsigned int SCR_WIDTH = 3840;
-const unsigned int SCR_HEIGHT = 2160;
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
 
 // camera
 FirstPersonCamera camera(glm::vec3(0.0f, 0.0f, 3.0f),
@@ -97,10 +97,11 @@ std::ostream& operator<<(std::ostream& os, const glm::vec3& vec) {
 int main() {
     GLFWwindow *window = initializeGlfwWindow();
 
-    // build and compile our shader program
+    // build and compile shader program
     Shader pipelineShaders("../shaders/vertex.glsl", "../shaders/fragment.glsl");
-    ComputeShader computeShader("../shaders/compute.glsl");
-    ParticleSystem particleSystem(&pipelineShaders, &computeShader);
+//    ComputeShader octreeBuilderShader("../shaders/buildTree.glsl");
+    ComputeShader forceCalculationShader("../shaders/calculateForces.glsl");
+    ParticleSystem particleSystem(DistributionType::SPHERICAL_SHELL, &pipelineShaders, &forceCalculationShader);
 
     // activate depth buffer culling
     glEnable(GL_DEPTH_TEST);
@@ -122,7 +123,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // create transformations
-        glm::vec3 cameraPos(2.0f * std::cos(camera.yaw), 0.0f, 2.0f * std::sin(camera.yaw));
+        glm::vec3 cameraPos(3.0f * std::cos(camera.yaw), 0.0f, 3.0f * std::sin(camera.yaw));
         camera.position = cameraPos;
         camera.forward = -glm::normalize(cameraPos);
         camera.right = glm::normalize(glm::cross(camera.forward, camera.worldUp));
@@ -132,19 +133,18 @@ int main() {
 
         glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
-
         // std::cout << "camera forward: " << camera.forward << '\n';
         // std::cout << "camera position: " << camera.position << '\n';
 
         particleSystem.update(deltaTime);
         particleSystem.render(view, projection);
 
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+        // swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // glfw: terminate, clearing all previously allocated GLFW resources.
+    // terminate, clearing all previously allocated GLFW resources
     glfwTerminate();
     return 0;
 }
@@ -176,10 +176,9 @@ void processInput(GLFWwindow *window) {
 
 }
 
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
+// whenever the window size changed (by OS or user resize) this callback function executes
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    // make sure the viewport matches the new window dimensions; note that width and
-    // height will be significantly larger than specified on retina displays.
+    // make sure the viewport matches the new window dimensions;
     glViewport(0, 0, width, height);
 }
 

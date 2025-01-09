@@ -15,7 +15,7 @@ layout(std430, binding = 0) buffer ParticleBuffer {
 
 uniform float deltaTime;
 const float G = 6.67430e-12;
-const float softening = 0.2;
+const float softening = 0.02;
 const float drag = 0.001;
 
 void main() {
@@ -26,7 +26,7 @@ void main() {
     vec3 vel = particles[index].velocity.xyz;
     float mass = particles[index].mass;
 
-    vec3 dragForce = -drag *  vel;
+    vec3 dragForce = -drag * vel;
 
     vec3 totalForce = vec3(0.0);
 

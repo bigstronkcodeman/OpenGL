@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(OpenGL REQUIRED)
 
 if(WIN32)
-    message(STATUS "Building for Windows with vcpkg")
+    message(STATUS "Building for Windows")
     set(GLFW_INCLUDE_DIR "C:/glfw-3.4.bin.WIN64/include")
     set(GLFW_LIBRARY "C:/glfw-3.4.bin.WIN64/lib-mingw-w64/libglfw3.a")
 elseif(UNIX)
@@ -43,7 +43,10 @@ add_executable(${PROJECT_NAME} src/main.cpp
         include/compute_shader.h
         src/compute_shader.cpp
         include/particle_system.h
-        src/particle_system.cpp)
+        src/particle_system.cpp
+        include/octree_node.h
+        include/octree.h
+        src/octree.cpp)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
         external/glad/include

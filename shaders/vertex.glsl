@@ -27,16 +27,16 @@ void main() {
     vec4 pos;
     if (trailIndex == 0) {
         pos = particles[particleIndex].position;
-        pointAlpha = 1.0;
     } else {
         pos = particles[particleIndex].previousPositions[trailIndex-1];
-        pointAlpha = 1.0 - (float(trailIndex) / 17.0);
     }
+    pointAlpha = 1.0 - (float(trailIndex) / 17.0);
 
     gl_Position = projection * view * pos;
 
-    float baseSize = particles[particleIndex].mass / 100000.0 + 0.1;
-    gl_PointSize = baseSize * (trailIndex == 0 ? 1.0 : (1.0 - float(trailIndex) / 17.0));
+//    float baseSize = particles[particleIndex].mass / 2000000.0 + 0.1;
+//    gl_PointSize = baseSize * (trailIndex == 0 ? 1.0 : (1.0 - float(trailIndex) / 17.0));
+    gl_PointSize = 1.0f;
 
     velocity = particles[particleIndex].velocity;
 }

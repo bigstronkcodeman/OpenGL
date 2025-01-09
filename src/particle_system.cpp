@@ -6,17 +6,7 @@
 #include <random>
 
 
-enum class DistributionType {
-    TANGENTIAL_DONUT,
-    SPIRAL_GALAXY,
-    COLLIDING_WHEELS,
-    SPHERICAL_SHELL,
-    BINARY_SYSTEM
-};
-
-constexpr DistributionType type = DistributionType::SPHERICAL_SHELL;
-
-ParticleSystem::ParticleSystem(Shader* pipelineShaders, ComputeShader* computeShader)
+ParticleSystem::ParticleSystem(DistributionType distributionType, Shader* pipelineShaders, ComputeShader* computeShader)
         : pipelineShaders(pipelineShaders), computeShader(computeShader) {
 
     std::default_random_engine generator(12448);
@@ -27,35 +17,42 @@ ParticleSystem::ParticleSystem(Shader* pipelineShaders, ComputeShader* computeSh
         glm::vec3 position;
         glm::vec3 velocity;
 
-        switch(type) {
+        switch(distributionType) {
             case DistributionType::TANGENTIAL_DONUT: {
-               std::uniform_real_distribution<float> distribution(-1, 1);
-               std::uniform_real_distribution<float> distribution2(-0.3, 0.3);
-               std::uniform_real_distribution<float> mass_dist(5000.0f, 100000.0f);
+                std::uniform_real_distribution<float> distribution(-1, 1);
+                std::uniform_real_distribution<float> distribution2(-0.3, 0.3);
+                float meanMass = std::log(5000.0f);
+                float stddev = 2.2f;
+//               std::uniform_real_distribution<float> mass_dist(5000.0f, 100000.0f);
 
-               do {
-                   position = glm::vec3(
-                       distribution(generator),
-                       distribution(generator),
-                       distribution2(generator)
-                   );
-               } while (glm::length(position) > 1.0f);
+                std::lognormal_distribution<float> mass_dist(meanMass, stddev);
 
-               velocity = glm::normalize(glm::cross(position, glm::vec3(0.0f, 0.0f, 1.0f))) * 0.05f;
-               p.mass = mass_dist(generator);
-               break;
-           }
+                do {
+                    position = glm::vec3(
+                            distribution(generator),
+                            distribution(generator),
+                            distribution2(generator)
+                    );
+                } while (glm::length(position) > 1.0f);
+
+                velocity = glm::normalize(glm::cross(position, glm::vec3(0.0f, 0.0f, 1.0f))) * 0.05f;
+                p.mass = mass_dist(generator);
+                break;
+            }
             case DistributionType::SPIRAL_GALAXY: {
                 std::uniform_real_distribution<float> radius_dist(0.0f, 1.0f);
                 std::uniform_real_distribution<float> angle_dist(0.0f, 2.0f * M_PI);
                 std::uniform_real_distribution<float> z_dist(-0.1f, 0.1f);
-                std::uniform_real_distribution<float> mass_dist(5000.0f, 100000.0f);
+//                std::uniform_real_distribution<float> mass_dist(5000.0f, 100000.0f);
+                float meanMass = std::log(5000.0f);
+                float stddev = 1.5f;
+                std::lognormal_distribution<float> mass_dist(meanMass, stddev);
 
                 float radius = radius_dist(generator);
                 float angle = angle_dist(generator);
                 position = glm::vec3(
-                        radius * cos(angle),
-                        radius * sin(angle),
+                        radius * std::cos(angle),
+                        radius * std::sin(angle),
                         z_dist(generator)
                 );
 
@@ -69,7 +66,10 @@ ParticleSystem::ParticleSystem(Shader* pipelineShaders, ComputeShader* computeSh
                 std::uniform_real_distribution<float> radius_dist(0.0f, 0.3f);
                 std::uniform_real_distribution<float> angle_dist(0.0f, 2.0f * M_PI);
                 std::uniform_real_distribution<float> z_dist(-0.1f, 0.1f);
-                std::uniform_real_distribution<float> mass_dist(5000.0f, 100000.0f);
+//                std::uniform_real_distribution<float> mass_dist(5000.0f, 100000.0f);
+                float meanMass = std::log(5000.0f);
+                float stddev = 1.5f;
+                std::lognormal_distribution<float> mass_dist(meanMass, stddev);
 
                 bool inFirstGalaxy = i < NUM_PARTICLES/2;
                 glm::vec3 center = inFirstGalaxy ?
@@ -79,8 +79,8 @@ ParticleSystem::ParticleSystem(Shader* pipelineShaders, ComputeShader* computeSh
                 float radius = radius_dist(generator);
                 float angle = angle_dist(generator);
                 position = center + glm::vec3(
-                        radius * cos(angle),
-                        radius * sin(angle),
+                        radius * std::cos(angle),
+                        radius * std::sin(angle),
                         z_dist(generator)
                 ) * (inFirstGalaxy ? 1.0f : 2.0f);
 
@@ -95,28 +95,36 @@ ParticleSystem::ParticleSystem(Shader* pipelineShaders, ComputeShader* computeSh
             case DistributionType::SPHERICAL_SHELL: {
                 std::uniform_real_distribution<float> phi_dist(0.0f, 2.0f * M_PI);
                 std::uniform_real_distribution<float> costheta_dist(-1.0f, 1.0f);
-                std::uniform_real_distribution<float> mass_dist(500.0f, 20000.0f);
+                float meanMass = std::log(5000.0f);
+                float stddev = 1.5f;
+//               std::uniform_real_distribution<float> mass_dist(5000.0f, 100000.0f);
+
+                std::lognormal_distribution<float> mass_dist(meanMass, stddev);
+//                std::uniform_real_distribution<float> mass_dist(500.0f, 20000.0f);
                 std::uniform_real_distribution<float> vel_dist(0.0f, 0.03f);
 
 
                 float phi = phi_dist(generator);
-                float theta = acos(costheta_dist(generator));
+                float theta = std::acos(costheta_dist(generator));
                 float r = 1.0f;
 
                 position = glm::vec3(
-                        r * sin(theta) * cos(phi),
-                        r * sin(theta) * sin(phi),
-                        r * cos(theta)
+                        r * std::sin(theta) * std::cos(phi),
+                        r * std::sin(theta) * std::sin(phi),
+                        r * std::cos(theta)
                 );
 
-                velocity = -position * 0.01f ;  // Slight inward velocity for collapse
+                velocity = -position * 0.01f ;
                 p.mass = mass_dist(generator);
                 break;
             }
 
             case DistributionType::BINARY_SYSTEM: {
                 std::normal_distribution<float> position_dist(0.0f, 0.3f);
-                std::uniform_real_distribution<float> mass_dist(5000.0f, 100000.0f);
+//                std::uniform_real_distribution<float> mass_dist(5000.0f, 100000.0f);
+                float meanMass = std::log(5000.0f);
+                float stddev = 1.5f;
+                std::lognormal_distribution<float> mass_dist(meanMass, stddev);
 
                 bool inFirstCluster = i < NUM_PARTICLES/2;
                 glm::vec3 center = inFirstCluster ?
@@ -129,9 +137,26 @@ ParticleSystem::ParticleSystem(Shader* pipelineShaders, ComputeShader* computeSh
                         position_dist(generator)
                 );
 
-                // Orbital velocity around the system's center
                 velocity = glm::normalize(glm::cross(position, glm::vec3(0.0f, 1.0f, 0.0f))) * 0.05f;
                 p.mass = mass_dist(generator);
+                break;
+            }
+            case DistributionType::UNIT_SPHERE: {
+                float meanMass = std::log(5000.0f);
+                float stddev = 1.5f;
+                std::lognormal_distribution<float> mass_dist(meanMass, stddev);
+                std::uniform_real_distribution<float> pos_dist(-1.0f, 1.0f);
+
+                p.mass = mass_dist(generator);
+                do {
+                    position = glm::vec4(
+                        pos_dist(generator),
+                        pos_dist(generator),
+                        pos_dist(generator),
+                        0
+                    );
+                } while (glm::length(position) >= 1);
+                velocity = glm::vec4(0.0f);
                 break;
             }
         }
@@ -147,7 +172,6 @@ ParticleSystem::ParticleSystem(Shader* pipelineShaders, ComputeShader* computeSh
         particles.push_back(p);
     }
 
-    // Buffer setup remains the same
     glGenBuffers(1, &shaderStorageBufferObject);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, shaderStorageBufferObject);
     glBufferData(GL_SHADER_STORAGE_BUFFER,
