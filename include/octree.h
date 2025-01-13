@@ -19,6 +19,8 @@ public:
     static int getOctant(const glm::vec3& nodeCenter, const glm::vec3& particlePosition);
     void updateNodeMasses(int nodeIdx, const std::vector<Particle>& particles);
     const std::vector<OctreeNode>& getNodes();
+    void calculateForce(int particleIdx, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force);
+    void calculateForceRecursive(int nodeIdx, const glm::vec3& position, float mass, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force);
 };
 
 #endif //OPENGL_FUN_OCTREE_H

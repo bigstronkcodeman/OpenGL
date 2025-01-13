@@ -6,10 +6,12 @@
 #define PARTICLESYSTEM_H
 
 #include <vector>
+#include <array>
 #include <glad/glad.h>
 #include <particle.h>
 #include <shader.h>
 #include <compute_shader.h>
+#include <buffer_manager.h>
 
 
 enum class DistributionType {
@@ -25,9 +27,10 @@ enum class DistributionType {
 class ParticleSystem {
     Shader* pipelineShaders;
     ComputeShader* computeShader;
-    GLuint vao;
-    GLuint shaderStorageBufferObject;
     std::vector<Particle> particles;
+    std::array<ShaderStorageBuffer, 2> particleBuffers;
+    int currentBuffer;
+    VertexArrayObject vao;
     const int NUM_PARTICLES = 50000;
 
 public:
@@ -35,6 +38,7 @@ public:
     void update(float deltaTime);
     void render(const glm::mat4& view, const glm::mat4& projection);
     void render(const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection);
+    std::vector<Particle>& getParticles();
 };
 
 #endif //PARTICLESYSTEM_H

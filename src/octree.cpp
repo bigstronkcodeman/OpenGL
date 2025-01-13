@@ -79,8 +79,8 @@ int Octree::getOctant(const glm::vec3& nodeCenter, const glm::vec3& particlePosi
     // - MSB is the z comparison
     // we can use this as our child index offset, since 2^3 - 1 = 7
     return (particlePosition.x >= nodeCenter.x)
-        | (particlePosition.y >= nodeCenter.y) << 1
-        | (particlePosition.z >= nodeCenter.z) << 2;
+         | (particlePosition.y >= nodeCenter.y) << 1
+         | (particlePosition.z >= nodeCenter.z) << 2;
 }
 
 void Octree::updateNodeMasses(int nodeIdx, const std::vector<Particle>& particles) {
@@ -117,4 +117,43 @@ void Octree::updateNodeMasses(int nodeIdx, const std::vector<Particle>& particle
 
 const std::vector<OctreeNode>& Octree::getNodes() {
     return nodes;
+}
+
+void Octree::calculateForce(int particleIdx, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force) {
+    const Particle& particle = particles[particleIdx];
+    calculateForceRecursive(0, particle.position, particle.mass, theta, softening, particles, force);
+}
+
+constexpr float G = 6.67430e-12;
+
+void Octree::calculateForceRecursive(int nodeIdx, const glm::vec3& position, float mass, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force) {
+    const OctreeNode& node = nodes[nodeIdx];
+
+    // node has no particles within and contributes no force, skip
+    if (node.totalMass == 0.0f) {
+        return;
+    }
+
+    // get distance to node's center of mass
+    glm::vec3 fromPositionToCenterOfMass = node.centerOfMass - position;
+    float distSquared = glm::dot(fromPositionToCenterOfMass, fromPositionToCenterOfMass);
+
+    // avoid calculating forces between a particle and itself
+    if (distSquared == 0.0f) {
+        return;
+    }
+
+    // if the node is an internal node and is far enough away,
+    // calculate the force using the internal node's total mass and center of mass
+    // (i.e., approximate this group as a single point mass)
+    if (node.firstChildIdx == -1 || (node.size * node.size) / distSquared < theta * theta) {
+        float distance = std::sqrt(distSquared + softening * softening);
+        force += G * mass * node.totalMass * fromPositionToCenterOfMass / (distance * distance * distance);
+        return;
+    }
+
+    // otherwise, recursively calculate forces from children
+    for (int i = 0; i < 8; i++) {
+        calculateForceRecursive(node.firstChildIdx + i, position, mass, theta, softening, particles, force);
+    }
 }

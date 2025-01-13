@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <vector>
 
@@ -11,6 +10,7 @@
 #include <shader.h>
 #include <compute_shader.h>
 #include <camera.h>
+#include <barnes_hut.h>
 
 #include "particle_system.h"
 
@@ -102,6 +102,7 @@ int main() {
 //    ComputeShader octreeBuilderShader("../shaders/buildTree.glsl");
     ComputeShader forceCalculationShader("../shaders/calculateForces.glsl");
     ParticleSystem particleSystem(DistributionType::SPHERICAL_SHELL, &pipelineShaders, &forceCalculationShader);
+    BarnesHut barnesHut(particleSystem.getParticles());
 
     // activate depth buffer culling
     glEnable(GL_DEPTH_TEST);
@@ -122,15 +123,15 @@ int main() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // create transformations
         glm::vec3 cameraPos(3.0f * std::cos(camera.yaw), 0.0f, 3.0f * std::sin(camera.yaw));
         camera.position = cameraPos;
         camera.forward = -glm::normalize(cameraPos);
         camera.right = glm::normalize(glm::cross(camera.forward, camera.worldUp));
         camera.up = glm::cross(camera.right, camera.forward);
         camera.yaw += .004f;
-        glm::mat4 view = camera.getViewTransform();
 
+        // create transformations
+        glm::mat4 view = camera.getViewTransform();
         glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
         // std::cout << "camera forward: " << camera.forward << '\n';
@@ -138,6 +139,8 @@ int main() {
 
         particleSystem.update(deltaTime);
         particleSystem.render(view, projection);
+
+        glFinish();
 
         // swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         glfwSwapBuffers(window);
@@ -181,4 +184,3 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     // make sure the viewport matches the new window dimensions;
     glViewport(0, 0, width, height);
 }
-

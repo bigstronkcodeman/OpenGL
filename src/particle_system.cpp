@@ -4,13 +4,16 @@
 
 #include <particle_system.h>
 #include <random>
-
+#include <iostream>
 
 ParticleSystem::ParticleSystem(DistributionType distributionType, Shader* pipelineShaders, ComputeShader* computeShader)
-        : pipelineShaders(pipelineShaders), computeShader(computeShader) {
+        : pipelineShaders(pipelineShaders)
+        , computeShader(computeShader)
+        , currentBuffer(0)
+        , particleBuffers()
+        , vao() {
 
     std::default_random_engine generator(12448);
-
 
     for (int i = 0; i < NUM_PARTICLES; i++) {
         Particle p;
@@ -164,7 +167,6 @@ ParticleSystem::ParticleSystem(DistributionType distributionType, Shader* pipeli
         p.position = glm::vec4(position, 1.0f);
         p.velocity = glm::vec4(velocity, 0.0f);
 
-        // Initialize trail positions
         for (auto & previousPosition : p.previousPositions) {
             previousPosition = p.position;
         }
@@ -172,31 +174,49 @@ ParticleSystem::ParticleSystem(DistributionType distributionType, Shader* pipeli
         particles.push_back(p);
     }
 
-    glGenBuffers(1, &shaderStorageBufferObject);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, shaderStorageBufferObject);
-    glBufferData(GL_SHADER_STORAGE_BUFFER,
-                 particles.size() * sizeof(Particle),
-                 particles.data(),
-                 GL_DYNAMIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, shaderStorageBufferObject);
+    for (int i = 0; i < particleBuffers.size(); i++) {
+        particleBuffers[i].allocate(particles.size() * sizeof(Particle),
+                                    particles.data(),
+                                    GL_DYNAMIC_DRAW);
+        particleBuffers[i].bindToPoint(i);
+    }
 
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, shaderStorageBufferObject);
+    VertexAttribute vertexAttribute{
+        .index = 0,
+        .size = 4,
+        .type = GL_FLOAT,
+        .normalized = GL_FALSE,
+        .stride = sizeof(Particle),
+        .offset = (void*)offsetof(Particle, position)
+    };
+
+    vao.bind();
+    particleBuffers[0].bind();
+    vao.setVertexAttributePointers({vertexAttribute});
 }
+
 
 void ParticleSystem::update(float deltaTime) {
     computeShader->use();
     computeShader->setFloat("deltaTime", deltaTime);
-    glDispatchCompute(static_cast<GLuint>(std::ceil(NUM_PARTICLES / 128.0f)), 1, 1);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
+
+    particleBuffers[currentBuffer].bindToPoint(0);
+    particleBuffers[1 - currentBuffer].bindToPoint(1);
+
+    glDispatchCompute(static_cast<GLuint>(std::ceil(NUM_PARTICLES / 1024.0f)), 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    currentBuffer = 1 - currentBuffer;
 }
 
 void ParticleSystem::render(const glm::mat4& view, const glm::mat4& projection) {
     pipelineShaders->use();
     pipelineShaders->setMat4("view", view);
     pipelineShaders->setMat4("projection", projection);
-    glBindVertexArray(vao);
+    pipelineShaders->setInt("currentBuffer", currentBuffer);
+
+    vao.bind();
+    particleBuffers[currentBuffer].bind();
     glDrawArrays(GL_POINTS, 0, particles.size() * 17);
 }
 
@@ -205,6 +225,12 @@ void ParticleSystem::render(const glm::mat4& model, const glm::mat4& view, const
     pipelineShaders->setMat4("model", model);
     pipelineShaders->setMat4("view", view);
     pipelineShaders->setMat4("projection", projection);
-    glBindVertexArray(vao);
+
+    vao.bind();
+    particleBuffers[currentBuffer].bind();
     glDrawArrays(GL_POINTS, 0, particles.size() * 17);
+}
+
+std::vector<Particle>& ParticleSystem::getParticles() {
+    return particles;
 }
