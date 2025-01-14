@@ -21,6 +21,9 @@ public:
     const std::vector<OctreeNode>& getNodes();
     void calculateForce(int particleIdx, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force);
     void calculateForceRecursive(int nodeIdx, const glm::vec3& position, float mass, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force);
+    void clear(const glm::vec3& center, float size);
+    void drawBoundingBoxes() const;
+    void drawBoundingBox(const OctreeNode& node) const;
 };
 
 #endif //OPENGL_FUN_OCTREE_H

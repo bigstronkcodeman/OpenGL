@@ -69,5 +69,5 @@ void FirstPersonCamera::updateVectors() {
     forward = glm::normalize(forward);
 
     right = -glm::normalize(glm::cross(forward, worldUp));
-    up = glm::cross(right, forward);
+    up = glm::normalize(glm::cross(right, forward));
 }

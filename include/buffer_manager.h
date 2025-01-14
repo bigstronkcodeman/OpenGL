@@ -97,6 +97,10 @@ public:
                                   attribute.normalized, attribute.stride, attribute.offset);
         }
     }
+
+    void allocate(GLsizeiptr size, const void* data, GLenum usage) const {
+        vertexBuffer->allocate(size, data, usage);
+    }
 };
 
 #endif //OPENGL_FUN_BUFFER_MANAGER_H

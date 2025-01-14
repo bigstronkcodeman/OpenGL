@@ -8,9 +8,17 @@
 
 BarnesHut::BarnesHut(std::vector<Particle>& particles)
     : particles(particles)
-    , octree(Octree(glm::vec3(0.0f), 1.01f))
+    , octree(glm::vec3(0.0f), 2.01f)
     , forces(particles.size())
 {}
+
+void BarnesHut::buildTree() {
+    octree.clear(glm::vec3(0.0f), 2.01f);
+
+    for (int i = 0; i < particles.size(); i++) {
+        octree.insertParticle(i, particles);
+    }
+}
 
 const std::vector<glm::vec3>& BarnesHut::calculateForces(float theta, float softening) {
     static const size_t numThreads = std::thread::hardware_concurrency();
@@ -57,3 +65,10 @@ void BarnesHut::updateParticles(float deltaTime) {
     }
 }
 
+void BarnesHut::renderParticles(const glm::mat4& view, const glm::mat4& projection) {
+
+}
+
+const Octree& BarnesHut::getOctree() {
+    return octree;
+}

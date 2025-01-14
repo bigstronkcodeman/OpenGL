@@ -18,6 +18,4 @@ struct Particle {
     glm::vec4 previousPositions[POSITION_HISTORY_SIZE];
 };
 
-constexpr int size = sizeof(Particle);
-
 #endif //PARTICLE_H

@@ -37,7 +37,7 @@ void main() {
     pointAlpha = 1.0 - (float(trailIndex) / 17.0);
 
     gl_Position = projection * view * pos;
-    gl_PointSize = 1.0f;
+    gl_PointSize = 5.0f;
 
     velocity = particle.velocity;
 }

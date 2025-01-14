@@ -17,9 +17,11 @@ private:
     Octree octree;
 public:
     BarnesHut(std::vector<Particle>& particles);
+    void buildTree();
     const std::vector<glm::vec3>& calculateForces(float theta, float softening);
     void updateParticles(float deltaTime);
-    void renderParticles();
+    void renderParticles(const glm::mat4& view, const glm::mat4& projection);
+    const Octree& getOctree();
 };
 
 #endif //OPENGL_FUN_BARNES_HUT_H
