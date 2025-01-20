@@ -205,6 +205,10 @@ int main() {
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 void processInput(GLFWwindow *window) {
+    static constexpr double KEY_PRESS_WAIT_TIME = 0.1;
+    static double lastKeyPressedTime = 0.0f;
+    double currentTime = glfwGetTime();
+
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
@@ -227,8 +231,14 @@ void processInput(GLFWwindow *window) {
         camera.speed += 0.01f;
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
         camera.speed = std::max(0.01f, camera.speed - 0.01f);
-    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
-        drawOctree = !drawOctree;
+
+    // commands that should wait before getting re-triggered
+    if (currentTime - lastKeyPressedTime > KEY_PRESS_WAIT_TIME) {
+        if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
+            drawOctree = !drawOctree;
+        }
+        lastKeyPressedTime = currentTime;
+    }
 
 }
 
