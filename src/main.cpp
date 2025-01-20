@@ -11,6 +11,7 @@
 #include <compute_shader.h>
 #include <camera.h>
 #include <barnes_hut.h>
+#include <timers.h>
 
 #include "particle_system.h"
 
@@ -38,6 +39,7 @@ float lastMouseX = 400.0f;
 float lastMouseY = 300.0f;
 bool firstMouse = true;
 float mixin = 0.0f;
+bool drawOctree = false;
 
 // process mouse movement
 void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
@@ -77,8 +79,8 @@ GLFWwindow* initializeGlfwWindow() {
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-//     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
@@ -124,7 +126,6 @@ int main() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     pipelineShaders.use();
-    camera.yaw = 0;
 
     // render loop
     float currentFrame;
@@ -147,34 +148,50 @@ int main() {
 //        camera.yaw += .004f;
 
         // create transformations
-//        glm::mat4 view = camera.getViewTransform();
-        glm::mat4 view = glm::lookAt(camera.position, camera.position + camera.forward, camera.worldUp);
-        glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 view = camera.getViewTransform();
+//        glm::mat4 view = glm::lookAt(camera.position, camera.position + camera.forward, camera.worldUp);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.0001f, 100.0f);
 
         // std::cout << "camera forward: " << camera.forward << '\n';
         // std::cout << "camera position: " << camera.position << '\n';
 
-        barnesHut.buildTree();
-        barnesHut.calculateForces(0.5f, 0.5);
-        barnesHut.updateParticles(deltaTime);
+        {
+            Timer timer("Build tree");
+            barnesHut.buildTree();
+        }
+        {
+            Timer timer("Calculate forces");
+            barnesHut.calculateForces(0.5f, 0.01);
+        }
+        {
+            Timer timer("Update particles");
+            barnesHut.updateParticles(deltaTime);
+        }
 
-        defaultShaders.use();
-        defaultShaders.setMat4("view", view);
-        defaultShaders.setMat4("projection", projection);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  // Wireframe mode
-        barnesHut.getOctree().drawBoundingBoxes();
+        if (drawOctree) {
+            defaultShaders.use();
+            defaultShaders.setMat4("view", view);
+            defaultShaders.setMat4("projection", projection);
+            {
+                Timer timer("Draw bounding boxes");
+//                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  // Wireframe mode
+                barnesHut.getOctree().drawBoundingBoxes();
+            }
+        }
 
         pipelineShaders.use();
         pipelineShaders.setMat4("view", view);
         pipelineShaders.setMat4("projection", projection);
-        vao.allocate(particleSystem.getParticles().size() * sizeof(Particle),
-                     particleSystem.getParticles().data(),
-                     GL_DYNAMIC_DRAW);
-        glDrawArrays(GL_POINTS, 0, particleSystem.getParticles().size() * (1 + POSITION_HISTORY_SIZE));
+//        std::cout << "particle[500].position: " << particleSystem.getParticles()[500].position << '\n';
+        {
+            Timer timer("Move particles to GPU and draw");
+            vao.allocate(particleSystem.getParticles().size() * sizeof(Particle),
+                         particleSystem.getParticles().data(),
+                         GL_DYNAMIC_DRAW);
+            glDrawArrays(GL_POINTS, 0, particleSystem.getParticles().size() /** (1 + POSITION_HISTORY_SIZE)*/);
+        }
 //        particleSystem.update(deltaTime);
 //        particleSystem.render(view, projection);
-
-        glFinish();
 
         // swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         glfwSwapBuffers(window);
@@ -209,7 +226,9 @@ void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
         camera.speed += 0.01f;
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-        camera.speed -= 0.01f;
+        camera.speed = std::max(0.01f, camera.speed - 0.01f);
+    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+        drawOctree = !drawOctree;
 
 }
 

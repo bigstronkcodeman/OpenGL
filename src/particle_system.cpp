@@ -100,10 +100,8 @@ ParticleSystem::ParticleSystem(DistributionType distributionType, Shader* pipeli
                 std::uniform_real_distribution<float> costheta_dist(-1.0f, 1.0f);
                 float meanMass = std::log(5000.0f);
                 float stddev = 1.5f;
-//               std::uniform_real_distribution<float> mass_dist(5000.0f, 100000.0f);
-
                 std::lognormal_distribution<float> mass_dist(meanMass, stddev);
-//                std::uniform_real_distribution<float> mass_dist(500.0f, 20000.0f);
+//                std::uniform_real_distribution<float> mass_dist(5000.0f, 100000.0f);
                 std::uniform_real_distribution<float> vel_dist(0.0f, 0.03f);
 
 
@@ -118,7 +116,8 @@ ParticleSystem::ParticleSystem(DistributionType distributionType, Shader* pipeli
                 );
 
                 velocity = -position * 0.01f ;
-                p.mass = mass_dist(generator);
+//                p.mass = mass_dist(generator);
+                p.mass = 1000.0f;
                 break;
             }
 

@@ -49,7 +49,9 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/octree.cpp
         include/barnes_hut.h
         src/barnes_hut.cpp
-        include/buffer_manager.h)
+        include/buffer_manager.h
+        include/timers.h
+        include/thread_pool.h)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
         external/glad/include

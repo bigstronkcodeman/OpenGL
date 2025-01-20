@@ -10,12 +10,12 @@ const vec3 COLOR_RED = vec3(0.0, 1.0, 0.25);
 const float MAX_SPEED = 0.1;
 
 void main() {
-    float speed = length(velocity.xyz);
-    float speedFactor = clamp(speed / MAX_SPEED, 0.0, 1.0);
-    vec3 finalColor = mix(COLOR_BLUE, COLOR_RED, speedFactor);
-    FragColor = vec4(finalColor, pointAlpha);
+//    float speed = length(velocity.xyz);
+//    float speedFactor = clamp(speed / MAX_SPEED, 0.0, 1.0);
+//    vec3 finalColor = mix(COLOR_BLUE, COLOR_RED, speedFactor);
+//    FragColor = vec4(finalColor, pointAlpha);
 //    FragColor = vec4(max(velocity.x * 200.0f, 0.2f), max(velocity.y * 200.0f, 0.2f), max(velocity.z * 200.0f, 0.2f), pointAlpha);
-//    FragColor = vec4(1.0f);
+    FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 
 
 //    float r = dot(coord, coord);

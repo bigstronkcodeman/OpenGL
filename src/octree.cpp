@@ -26,7 +26,7 @@ void Octree::insertParticleRecursive(int nodeIdx, int particleIdx, const std::ve
     // empty leaf node, just insert the particle
     if (nodes[nodeIdx].firstChildIdx == -1 && nodes[nodeIdx].particleIdx == -1) {
         nodes[nodeIdx].particleIdx = particleIdx;
-        updateNodeMasses(nodeIdx, particles);
+//        updateNodeMasses(nodeIdx, particles);
         return;
     }
 
@@ -41,9 +41,9 @@ void Octree::insertParticleRecursive(int nodeIdx, int particleIdx, const std::ve
 
         for (int i = 0; i < 8; i++) {
             glm::vec3 offset = {
-                (i & 4) ? childSize : -childSize,
+                (i & 1) ? childSize : -childSize,
                 (i & 2) ? childSize : -childSize,
-                (i & 1) ? childSize : -childSize
+                (i & 4) ? childSize : -childSize
             };
 
             nodes.emplace_back(OctreeNode{
@@ -69,7 +69,7 @@ void Octree::insertParticleRecursive(int nodeIdx, int particleIdx, const std::ve
     insertParticleRecursive(nodes[nodeIdx].firstChildIdx + octant, particleIdx, particles);
 
     // update node mass to include new particle
-    updateNodeMasses(nodeIdx, particles);
+//    updateNodeMasses(nodeIdx, particles);
 }
 
 int Octree::getOctant(const glm::vec3& nodeCenter, const glm::vec3& particlePosition) {
@@ -87,7 +87,7 @@ void Octree::updateNodeMasses(int nodeIdx, const std::vector<Particle>& particle
 //    OctreeNode& node = nodes[nodeIdx];
 
     if (nodes[nodeIdx].firstChildIdx == -1) {
-        // empty leaf node, undefined totalMass
+        // empty leaf node, undefined total mass
         if (nodes[nodeIdx].particleIdx == -1) {
             nodes[nodeIdx].totalMass = 0.0f;
             return;
@@ -124,37 +124,79 @@ void Octree::calculateForce(int particleIdx, float theta, float softening, const
     calculateForceRecursive(0, particle.position, particle.mass, theta, softening, particles, force);
 }
 
-constexpr float G = 6.67430e-12;
+constexpr float G = 6.67430e-11;
+
+//void Octree::calculateForceRecursive(int nodeIdx, const glm::vec3& position, float mass, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force) {
+////    const OctreeNode& node = nodes[nodeIdx];
+//
+//    // node has no particles within and contributes no force, skip
+//    if (nodes[nodeIdx].totalMass == 0.0f) {
+//        return;
+//    }
+//
+//    // get distance to node's center of mass
+//    glm::vec3 fromPositionToCenterOfMass = nodes[nodeIdx].centerOfMass - position;
+//    float distSquared = glm::dot(fromPositionToCenterOfMass, fromPositionToCenterOfMass);
+//
+//    // avoid calculating forces between a particle and itself
+//    if (distSquared == 0.0f) {
+//        return;
+//    }
+//
+//    // if the node is an internal node and is far enough away,
+//    // calculate the force using the internal node's total mass and center of mass
+//    // (i.e., approximate this group as a single point mass)
+//    if (nodes[nodeIdx].firstChildIdx == -1 || (nodes[nodeIdx].size * nodes[nodeIdx].size) / distSquared < theta * theta) {
+//        float distance = std::sqrt(distSquared + softening * softening);
+//        force += G * mass * nodes[nodeIdx].totalMass * fromPositionToCenterOfMass / (distance * distance * distance);
+//        return;
+//    }
+//
+//    // otherwise, recursively calculate forces from children
+//    for (int i = 0; i < 8; i++) {
+//        calculateForceRecursive(nodes[nodeIdx].firstChildIdx + i, position, mass, theta, softening, particles, force);
+//    }
+//}
 
 void Octree::calculateForceRecursive(int nodeIdx, const glm::vec3& position, float mass, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force) {
-//    const OctreeNode& node = nodes[nodeIdx];
+    // Stack to hold indices we need to process
+    // Size based on max possible depth of tree
+    constexpr int MAX_STACK_SIZE = 64;  // Can adjust based on your needs
+    int stack[MAX_STACK_SIZE];
+    int stackPtr = 0;
 
-    // node has no particles within and contributes no force, skip
-    if (nodes[nodeIdx].totalMass == 0.0f) {
-        return;
-    }
+    // Start with root
+    stack[stackPtr++] = nodeIdx;
 
-    // get distance to node's center of mass
-    glm::vec3 fromPositionToCenterOfMass = nodes[nodeIdx].centerOfMass - position;
-    float distSquared = glm::dot(fromPositionToCenterOfMass, fromPositionToCenterOfMass);
+    // Process nodes until stack is empty
+    while (stackPtr > 0) {
+        int currentIdx = stack[--stackPtr];
+        const OctreeNode& node = nodes[currentIdx];
 
-    // avoid calculating forces between a particle and itself
-    if (distSquared == 0.0f) {
-        return;
-    }
+        // Skip empty nodes
+        if (node.totalMass == 0.0f) continue;
 
-    // if the node is an internal node and is far enough away,
-    // calculate the force using the internal node's total mass and center of mass
-    // (i.e., approximate this group as a single point mass)
-    if (nodes[nodeIdx].firstChildIdx == -1 || (nodes[nodeIdx].size * nodes[nodeIdx].size) / distSquared < theta * theta) {
-        float distance = std::sqrt(distSquared + softening * softening);
-        force += G * mass * nodes[nodeIdx].totalMass * fromPositionToCenterOfMass / (distance * distance * distance);
-        return;
-    }
+        // Calculate distance to node's center of mass
+        glm::vec3 r = node.centerOfMass - position;
+        float distSquared = glm::dot(r, r);
 
-    // otherwise, recursively calculate forces from children
-    for (int i = 0; i < 8; i++) {
-        calculateForceRecursive(nodes[nodeIdx].firstChildIdx + i, position, mass, theta, softening, particles, force);
+        // Avoid self-interaction
+        if (distSquared == 0.0f) continue;
+
+        // If leaf node or node is far enough away, calculate force
+        if (node.firstChildIdx == -1 || (node.size * node.size) / distSquared < theta * theta) {
+            float dist = std::sqrt(distSquared + softening * softening);
+            force += G * mass * node.totalMass * r / (dist * dist * dist);
+            continue;
+        }
+
+        // Otherwise, push all children to stack
+        // Push them in reverse order so we process them in forward order when popping
+        for (int i = 7; i >= 0; i--) {
+            if (stackPtr < MAX_STACK_SIZE) {
+                stack[stackPtr++] = node.firstChildIdx + i;
+            }
+        }
     }
 }
 
