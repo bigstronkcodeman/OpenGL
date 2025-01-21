@@ -8,6 +8,7 @@
 #include <glad/glad.h>
 #include <iostream>
 #include <string>
+#include <chrono>
 
 class OpenGLTimer {
 private:
@@ -33,11 +34,34 @@ public:
     }
 };
 
-#include <glad/glad.h>
-#include <chrono>
-#include <iostream>
+class CpuTimer {
+private:
+    std::chrono::high_resolution_clock::time_point cpuStart;
+    std::string timerName;
+
+public:
+    CpuTimer(const std::string& name = "Timer") : timerName(name) {
+        cpuStart = std::chrono::high_resolution_clock::now();
+    }
+
+    ~CpuTimer() {
+        glEndQuery(GL_TIME_ELAPSED);
+
+        auto cpuEnd = std::chrono::high_resolution_clock::now();
+
+        double cpuTimeMs = std::chrono::duration<double, std::milli>(cpuEnd - cpuStart).count();
+
+        std::cout << "[" << timerName << "] CPU Time: " << cpuTimeMs << " ms\n";
+    }
+
+};
 
 class Timer {
+private:
+    GLuint gpuQueryID;
+    std::chrono::high_resolution_clock::time_point cpuStart;
+    std::string timerName;
+
 public:
     Timer(const std::string& name = "Timer") : timerName(name) {
         cpuStart = std::chrono::high_resolution_clock::now();
@@ -63,10 +87,6 @@ public:
         glDeleteQueries(1, &gpuQueryID);
     }
 
-private:
-    GLuint gpuQueryID;
-    std::chrono::high_resolution_clock::time_point cpuStart;
-    std::string timerName;
 };
 
 

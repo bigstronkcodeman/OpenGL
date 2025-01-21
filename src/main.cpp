@@ -22,6 +22,7 @@ void processInput(GLFWwindow *window);
 // settings
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
+constexpr bool BARNES_HUT = true;
 
 // camera
 FirstPersonCamera camera(glm::vec3(0.0f, 0.0f, 3.0f),
@@ -40,6 +41,7 @@ float lastMouseY = 300.0f;
 bool firstMouse = true;
 float mixin = 0.0f;
 bool drawOctree = false;
+bool pause = false;
 
 // process mouse movement
 void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
@@ -101,11 +103,11 @@ int main() {
     GLFWwindow *window = initializeGlfwWindow();
 
     // build and compile shader program
-    Shader pipelineShaders("../shaders/vertex.glsl", "../shaders/fragment.glsl");
-    Shader defaultShaders("../shaders/defaultVertexShader.glsl", "../shaders/defaultFragmentShader.glsl");
-//    ComputeShader octreeBuilderShader("../shaders/buildTree.glsl");
+    Shader naiveParticleShaders("../shaders/naiveParticlesVert.glsl", "../shaders/naiveParticlesFrag.glsl");
+    Shader barnesHutParticleShaders("../shaders/barnesHutParticlesVert.glsl", "../shaders/barnesHutParticlesFrag.glsl");
+    Shader octreeShaders("../shaders/octreeVert.glsl", "../shaders/octreeFrag.glsl");
     ComputeShader forceCalculationShader("../shaders/calculateForces.glsl");
-    ParticleSystem particleSystem(DistributionType::SPHERICAL_SHELL, &pipelineShaders, &forceCalculationShader);
+    ParticleSystem particleSystem(DistributionType::COLLIDING_WHEELS, BARNES_HUT ? &barnesHutParticleShaders : &naiveParticleShaders, &forceCalculationShader);
     BarnesHut barnesHut(particleSystem.getParticles());
 
     VertexArrayObject vao;
@@ -125,7 +127,7 @@ int main() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    pipelineShaders.use();
+    naiveParticleShaders.use();
 
     // render loop
     float currentFrame;
@@ -140,58 +142,58 @@ int main() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // rotate camera continually around origin
 //        glm::vec3 cameraPos(5.0f * std::cos(camera.yaw), 0.0f, 5.0f * std::sin(camera.yaw));
 //        camera.position = cameraPos;
 //        camera.forward = -glm::normalize(cameraPos);
 //        camera.right = glm::normalize(glm::cross(camera.forward, camera.worldUp));
 //        camera.up = glm::cross(camera.right, camera.forward);
-//        camera.yaw += .004f;
+//        camera.yaw += .01f;
 
         // create transformations
         glm::mat4 view = camera.getViewTransform();
-//        glm::mat4 view = glm::lookAt(camera.position, camera.position + camera.forward, camera.worldUp);
         glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.0001f, 100.0f);
 
-        // std::cout << "camera forward: " << camera.forward << '\n';
-        // std::cout << "camera position: " << camera.position << '\n';
-
-        {
-            Timer timer("Build tree");
-            barnesHut.buildTree();
-        }
-        {
-            Timer timer("Calculate forces");
-            barnesHut.calculateForces(0.5f, 0.01);
-        }
-        {
-            Timer timer("Update particles");
-            barnesHut.updateParticles(deltaTime);
-        }
-
-        if (drawOctree) {
-            defaultShaders.use();
-            defaultShaders.setMat4("view", view);
-            defaultShaders.setMat4("projection", projection);
+        if (BARNES_HUT) {
             {
-                Timer timer("Draw bounding boxes");
-//                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  // Wireframe mode
-                barnesHut.getOctree().drawBoundingBoxes();
+                CpuTimer timer("Build tree");
+                barnesHut.buildTree();
             }
-        }
+            if (!pause) {
+                CpuTimer timer("Calculate forces");
+                barnesHut.calculateForces(0.5f, 0.02);
+            }
+            if (!pause) {
+                CpuTimer timer("Update particles");
+                barnesHut.updateParticles(deltaTime);
+            }
 
-        pipelineShaders.use();
-        pipelineShaders.setMat4("view", view);
-        pipelineShaders.setMat4("projection", projection);
-//        std::cout << "particle[500].position: " << particleSystem.getParticles()[500].position << '\n';
-        {
-            Timer timer("Move particles to GPU and draw");
-            vao.allocate(particleSystem.getParticles().size() * sizeof(Particle),
-                         particleSystem.getParticles().data(),
-                         GL_DYNAMIC_DRAW);
-            glDrawArrays(GL_POINTS, 0, particleSystem.getParticles().size() /** (1 + POSITION_HISTORY_SIZE)*/);
+            if (drawOctree) {
+                octreeShaders.use();
+                octreeShaders.setMat4("view", view);
+                octreeShaders.setMat4("projection", projection);
+                {
+                    Timer timer("Draw bounding boxes");
+                    barnesHut.getOctree().drawBoundingBoxes();
+                }
+            }
+
+            barnesHutParticleShaders.use();
+            barnesHutParticleShaders.setMat4("view", view);
+            barnesHutParticleShaders.setMat4("projection", projection);
+            {
+                Timer timer("Move particles to GPU and draw");
+                vao.allocate(particleSystem.getParticles().size() * sizeof(Particle),
+                             particleSystem.getParticles().data(),
+                             GL_DYNAMIC_DRAW);
+                glDrawArrays(GL_POINTS, 0, particleSystem.getParticles().size() /** (1 + POSITION_HISTORY_SIZE)*/);
+            }
+        } else {
+            if (!pause) {
+                particleSystem.update(deltaTime);
+            }
+            particleSystem.render(view, projection);
         }
-//        particleSystem.update(deltaTime);
-//        particleSystem.render(view, projection);
 
         // swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         glfwSwapBuffers(window);
@@ -236,6 +238,9 @@ void processInput(GLFWwindow *window) {
     if (currentTime - lastKeyPressedTime > KEY_PRESS_WAIT_TIME) {
         if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
             drawOctree = !drawOctree;
+        }
+        if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+            pause = !pause;
         }
         lastKeyPressedTime = currentTime;
     }

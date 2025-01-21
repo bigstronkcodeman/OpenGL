@@ -9,46 +9,66 @@
 #include <future>
 #include <cstring>
 #include "thread_pool.h"
+#include "timers.h"
+
+constexpr float OUTER_BOX_SIZE = 5.0f;
 
 BarnesHut::BarnesHut(std::vector<Particle>& particles)
     : particles(particles)
-    , octree(glm::vec3(0.0f), 50.01f)
+    , octree(glm::vec3(0.0f), OUTER_BOX_SIZE)
     , forces(particles.size())
 {}
 
 void BarnesHut::buildTree() {
-    octree.clear(glm::vec3(0.0f), 50.01f);
-
-    for (int i = 0; i < particles.size(); i++) {
-        octree.insertParticle(i, particles);
+    {
+        CpuTimer timer("clear octree");
+        octree.clear(glm::vec3(0.0f), OUTER_BOX_SIZE);
     }
-//    octree.updateNodeMasses(0, particles);
-    for (int i = octree.getNodes().size() - 1; i >= 0; i--) {
-        octree.updateNodeMasses(i, particles);
+
+    {
+        CpuTimer timer("insert particles");
+        for (int i = 0; i < particles.size(); i++) {
+            octree.insertParticle(i, particles);
+        }
+    }
+
+    {
+        CpuTimer timer("update node masses");
+        for (int i = octree.getNodes().size() - 1; i >= 0; i--) {
+            octree.updateNodeMasses(i, particles);
+        }
     }
 }
 
-const std::vector<glm::vec3>& BarnesHut::calculateForces(float theta, float softening) {
+//void BarnesHut::calculateForces(float theta, float softening) {
+//    for (size_t i = 0; i < particles.size(); i++) {
+//        glm::vec3 force(0.0f);
+//        octree.calculateForce(i, theta, softening, particles, force);
+//        forces[i] = force;
+//    }
+//}
+
+void BarnesHut::calculateForces(float theta, float softening) {
     const size_t numThreads = std::thread::hardware_concurrency();
     std::vector<std::thread> threads;
 
-    // Pre-allocate thread-local storage
+    // thread-local storage
     std::vector<std::vector<glm::vec3>> threadForces(numThreads);
 
     auto processParticleRange = [&](size_t threadId, size_t start, size_t end) {
-        // Initialize thread-local storage once
-        auto& localForces = threadForces[threadId];
+        // initialize thread-local storage once
+        std::vector<glm::vec3>& localForces = threadForces[threadId];
         localForces.resize(end - start);
 
         for (size_t i = start; i < end; i++) {
             glm::vec3 force(0.0f);
-            octree.calculateForceRecursive(0, particles[i].position, particles[i].mass,
+            octree.calculateForceRecursive(0, particles[i].position, particles[i].velocity, particles[i].mass,
                                            theta, softening, particles, force);
             localForces[i - start] = force;
         }
     };
 
-    // Divide work among threads
+    // divide work among threads
     const size_t particlesPerThread = particles.size() / numThreads;
     for (size_t i = 0; i < numThreads; i++) {
         size_t start = i * particlesPerThread;
@@ -56,20 +76,18 @@ const std::vector<glm::vec3>& BarnesHut::calculateForces(float theta, float soft
         threads.emplace_back(processParticleRange, i, start, end);
     }
 
-    // Wait for completion
-    for (auto& thread : threads) {
+    // wait for completion
+    for (std::thread& thread : threads) {
         thread.join();
     }
 
-    // Merge results
+    // merge results
     for (size_t t = 0; t < numThreads; t++) {
         size_t start = t * particlesPerThread;
         size_t count = threadForces[t].size();
         std::memcpy(&forces[start], threadForces[t].data(),
                     count * sizeof(glm::vec3));
     }
-
-    return forces;
 }
 
 //const std::vector<glm::vec3>& BarnesHut::calculateForces(float theta, float softening) {

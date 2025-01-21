@@ -24,11 +24,11 @@ ParticleSystem::ParticleSystem(DistributionType distributionType, Shader* pipeli
             case DistributionType::TANGENTIAL_DONUT: {
                 std::uniform_real_distribution<float> distribution(-1, 1);
                 std::uniform_real_distribution<float> distribution2(-0.3, 0.3);
-                float meanMass = std::log(5000.0f);
-                float stddev = 2.2f;
-//               std::uniform_real_distribution<float> mass_dist(5000.0f, 100000.0f);
+//                float meanMass = std::log(5000.0f);
+//                float stddev = 2.2f;
+//                std::lognormal_distribution<float> mass_dist(meanMass, stddev);
+                std::uniform_real_distribution<float> mass_dist(5000.0f, 100000.0f);
 
-                std::lognormal_distribution<float> mass_dist(meanMass, stddev);
 
                 do {
                     position = glm::vec3(
@@ -190,7 +190,7 @@ ParticleSystem::ParticleSystem(DistributionType distributionType, Shader* pipeli
     };
 
     vao.bind();
-    particleBuffers[0].bind();
+    particleBuffers[currentBuffer].bind();
     vao.setVertexAttributePointers({vertexAttribute});
 }
 

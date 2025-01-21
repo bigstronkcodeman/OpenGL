@@ -29,7 +29,7 @@ class ParticleSystem {
     ComputeShader* computeShader;
     std::vector<Particle> particles;
     std::array<ShaderStorageBuffer, 2> particleBuffers;
-    int currentBuffer;
+    GLuint currentBuffer;
     VertexArrayObject vao;
     const int NUM_PARTICLES = 10000;
 

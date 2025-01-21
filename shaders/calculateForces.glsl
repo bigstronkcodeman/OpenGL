@@ -18,7 +18,7 @@ layout(std430, binding = 1) buffer ParticleBufferOut {
 };
 
 uniform float deltaTime;
-const float G = 6.67430e-12;
+const float G = 6.67430e-11;
 const float softening = 0.02;
 const float drag = 0.001;
 
@@ -26,12 +26,14 @@ void main() {
     uint index = gl_GlobalInvocationID.x;
     if (index >= particles_in.length()) return;
 
-    vec3 pos = particles_in[index].position.xyz;
-    vec3 vel = particles_in[index].velocity.xyz;
-    float mass = particles_in[index].mass;
+    Particle p_in = particles_in[index];
+    Particle p_out = p_in;
+
+    vec3 pos = p_in.position.xyz;
+    vec3 vel = p_in.velocity.xyz;
+    float mass = p_in.mass;
 
     vec3 dragForce = -drag * vel;
-
     vec3 totalForce = vec3(0.0);
 
     for (uint i = 0; i < particles_in.length(); i++) {
@@ -46,17 +48,17 @@ void main() {
         totalForce += (normalize(dir) * G * mass * otherMass / distSqr) + dragForce;
     }
 
-
     vec3 acc = totalForce / mass;
     vec3 newVel = vel + acc * deltaTime;
     vec3 newPos = pos + newVel * deltaTime;
 
-    particles_out[index].velocity.xyz = newVel;
+    p_out.velocity.xyz = newVel;
 
     for (int i = 15; i > 0; i--) {
-        particles_out[index].previousPositions[i] = particles_out[index].previousPositions[i-1];
+        p_out.previousPositions[i] = p_out.previousPositions[i-1];
     }
-    particles_out[index].previousPositions[0] = particles_out[index].position;
+    p_out.previousPositions[0] = p_out.position;
+    p_out.position.xyz = newPos;
 
-    particles_out[index].position.xyz = newPos;
+    particles_out[index] = p_out;
 }

@@ -18,7 +18,7 @@ private:
 public:
     BarnesHut(std::vector<Particle>& particles);
     void buildTree();
-    const std::vector<glm::vec3>& calculateForces(float theta, float softening);
+    void calculateForces(float theta, float softening);
     void updateParticles(float deltaTime);
     void renderParticles(const glm::mat4& view, const glm::mat4& projection);
     const Octree& getOctree();

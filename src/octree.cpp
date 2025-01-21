@@ -3,9 +3,10 @@
 //
 
 #include <octree.h>
+#include <iostream>
 
 Octree::Octree(const glm::vec3& center, float size) {
-    nodes.emplace_back(OctreeNode{
+    nodes.push_back(OctreeNode{
         .centerOfMass = glm::vec3(0.0f),
         .regionCenter = center,
         .size = size,
@@ -46,7 +47,7 @@ void Octree::insertParticleRecursive(int nodeIdx, int particleIdx, const std::ve
                 (i & 4) ? childSize : -childSize
             };
 
-            nodes.emplace_back(OctreeNode{
+            nodes.push_back(OctreeNode{
                 .centerOfMass = glm::vec3(0.0f),
                 .regionCenter = nodes[nodeIdx].regionCenter + offset * 0.5f,
                 .size = childSize,
@@ -83,35 +84,70 @@ int Octree::getOctant(const glm::vec3& nodeCenter, const glm::vec3& particlePosi
          | (particlePosition.z >= nodeCenter.z) << 2;
 }
 
-void Octree::updateNodeMasses(int nodeIdx, const std::vector<Particle>& particles) {
-//    OctreeNode& node = nodes[nodeIdx];
+//void Octree::updateNodeMasses(int nodeIdx, const std::vector<Particle>& particles) {
+////    OctreeNode& node = nodes[nodeIdx];
+//
+//    if (nodes[nodeIdx].firstChildIdx == -1) {
+//        // empty leaf node, undefined total mass
+//        if (nodes[nodeIdx].particleIdx == -1) {
+//            nodes[nodeIdx].totalMass = 0.0f;
+//            return;
+//        }
+//
+//        // non-empty leaf node, just use the single particle for the
+//        // center of totalMass and total totalMass
+//        const Particle& particle = particles[nodes[nodeIdx].particleIdx];
+//        nodes[nodeIdx].centerOfMass = particle.position;
+//        nodes[nodeIdx].totalMass = particle.mass;
+//        return;
+//    }
+//
+//    // non-leaf node, need to update totalMass by accounting for all children
+//    nodes[nodeIdx].totalMass = 0.0f;
+//    nodes[nodeIdx].centerOfMass = glm::vec3(0.0f);
+//
+//    for (int i = 0; i < 8; i++) {
+//        const OctreeNode& child = nodes[nodes[nodeIdx].firstChildIdx + i];
+//        if (child.totalMass > 0.0f) {
+//            nodes[nodeIdx].centerOfMass =
+//                (nodes[nodeIdx].centerOfMass * nodes[nodeIdx].totalMass + child.centerOfMass * child.totalMass) / (nodes[nodeIdx].totalMass + child.totalMass);
+//            nodes[nodeIdx].totalMass += child.totalMass;
+//        }
+//    }
+//}
 
+void Octree::updateNodeMasses(int nodeIdx, const std::vector<Particle>& particles) {
     if (nodes[nodeIdx].firstChildIdx == -1) {
-        // empty leaf node, undefined total mass
         if (nodes[nodeIdx].particleIdx == -1) {
             nodes[nodeIdx].totalMass = 0.0f;
+            nodes[nodeIdx].centerOfMass = glm::vec3(0.0f);
             return;
         }
 
-        // non-empty leaf node, just use the single particle for the
-        // center of totalMass and total totalMass
         const Particle& particle = particles[nodes[nodeIdx].particleIdx];
         nodes[nodeIdx].centerOfMass = particle.position;
         nodes[nodeIdx].totalMass = particle.mass;
         return;
     }
 
-    // non-leaf node, need to update totalMass by accounting for all children
+    // For internal nodes, first zero out
     nodes[nodeIdx].totalMass = 0.0f;
-    nodes[nodeIdx].centerOfMass = glm::vec3(0.0f);
+    glm::vec3 weightedPosition = glm::vec3(0.0f);
 
+    // Accumulate weighted positions and masses
     for (int i = 0; i < 8; i++) {
         const OctreeNode& child = nodes[nodes[nodeIdx].firstChildIdx + i];
         if (child.totalMass > 0.0f) {
-            nodes[nodeIdx].centerOfMass =
-                (nodes[nodeIdx].centerOfMass * nodes[nodeIdx].totalMass + child.centerOfMass * child.totalMass) / (nodes[nodeIdx].totalMass + child.totalMass);
+            weightedPosition += child.centerOfMass * child.totalMass;
             nodes[nodeIdx].totalMass += child.totalMass;
         }
+    }
+
+    // Only compute center of mass if total mass is non-zero
+    if (nodes[nodeIdx].totalMass > 0.0f) {
+        nodes[nodeIdx].centerOfMass = weightedPosition / nodes[nodeIdx].totalMass;
+    } else {
+        nodes[nodeIdx].centerOfMass = glm::vec3(0.0f);
     }
 }
 
@@ -121,25 +157,27 @@ const std::vector<OctreeNode>& Octree::getNodes() {
 
 void Octree::calculateForce(int particleIdx, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force) {
     const Particle& particle = particles[particleIdx];
-    calculateForceRecursive(0, particle.position, particle.mass, theta, softening, particles, force);
+    calculateForceRecursive(0, particle.position, particle.velocity, particle.mass, theta, softening, particles, force);
 }
 
-constexpr float G = 6.67430e-11;
 
-//void Octree::calculateForceRecursive(int nodeIdx, const glm::vec3& position, float mass, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force) {
-////    const OctreeNode& node = nodes[nodeIdx];
+//void Octree::calculateForceRecursive(int nodeIdx, const glm::vec3& position, const glm::vec3& velocity, float mass, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force) {
+//    static constexpr float G = 6.67430e-11;
+//    static constexpr float DRAG_COEFFICIENT = 0.001f;
 //
 //    // node has no particles within and contributes no force, skip
 //    if (nodes[nodeIdx].totalMass == 0.0f) {
 //        return;
 //    }
 //
+//    glm::vec3 dragForce = -DRAG_COEFFICIENT * velocity;
+//
 //    // get distance to node's center of mass
-//    glm::vec3 fromPositionToCenterOfMass = nodes[nodeIdx].centerOfMass - position;
-//    float distSquared = glm::dot(fromPositionToCenterOfMass, fromPositionToCenterOfMass);
+//    glm::vec3 r = nodes[nodeIdx].centerOfMass - position;
+//    float distSquared = glm::dot(r, r) + softening;
 //
 //    // avoid calculating forces between a particle and itself
-//    if (distSquared == 0.0f) {
+//    if (distSquared == softening) {
 //        return;
 //    }
 //
@@ -147,54 +185,56 @@ constexpr float G = 6.67430e-11;
 //    // calculate the force using the internal node's total mass and center of mass
 //    // (i.e., approximate this group as a single point mass)
 //    if (nodes[nodeIdx].firstChildIdx == -1 || (nodes[nodeIdx].size * nodes[nodeIdx].size) / distSquared < theta * theta) {
-//        float distance = std::sqrt(distSquared + softening * softening);
-//        force += G * mass * nodes[nodeIdx].totalMass * fromPositionToCenterOfMass / (distance * distance * distance);
+//        force += (glm::normalize(r) * G * mass * nodes[nodeIdx].totalMass / distSquared) + dragForce;
 //        return;
 //    }
 //
 //    // otherwise, recursively calculate forces from children
 //    for (int i = 0; i < 8; i++) {
-//        calculateForceRecursive(nodes[nodeIdx].firstChildIdx + i, position, mass, theta, softening, particles, force);
+//        calculateForceRecursive(nodes[nodeIdx].firstChildIdx + i, position, velocity, mass, theta, softening, particles, force);
 //    }
 //}
 
-void Octree::calculateForceRecursive(int nodeIdx, const glm::vec3& position, float mass, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force) {
-    // Stack to hold indices we need to process
-    // Size based on max possible depth of tree
-    constexpr int MAX_STACK_SIZE = 64;  // Can adjust based on your needs
+void Octree::calculateForceRecursive(int nodeIdx, const glm::vec3& position, const glm::vec3& velocity, float mass, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force) {
+    static constexpr float G = 6.67430e-11;
+    static constexpr float DRAG_COEFFICIENT = 0.001f;
+    static constexpr int MAX_STACK_SIZE = 100;
     int stack[MAX_STACK_SIZE];
     int stackPtr = 0;
 
-    // Start with root
+    // start with root
     stack[stackPtr++] = nodeIdx;
 
-    // Process nodes until stack is empty
+    force += -DRAG_COEFFICIENT * velocity;
+
+    // process nodes until stack is empty
     while (stackPtr > 0) {
         int currentIdx = stack[--stackPtr];
         const OctreeNode& node = nodes[currentIdx];
 
-        // Skip empty nodes
+        // skip empty nodes
         if (node.totalMass == 0.0f) continue;
 
-        // Calculate distance to node's center of mass
+        // calculate distance to node's center of mass
         glm::vec3 r = node.centerOfMass - position;
-        float distSquared = glm::dot(r, r);
+        float distSquared = glm::dot(r, r) + softening;
 
-        // Avoid self-interaction
-        if (distSquared == 0.0f) continue;
+        // avoid self-interaction
+        if (distSquared == softening) continue;
 
-        // If leaf node or node is far enough away, calculate force
+        // if leaf node or node is far enough away, calculate force
         if (node.firstChildIdx == -1 || (node.size * node.size) / distSquared < theta * theta) {
-            float dist = std::sqrt(distSquared + softening * softening);
-            force += G * mass * node.totalMass * r / (dist * dist * dist);
+            force += (glm::normalize(r) * G * node.totalMass * mass / distSquared);
             continue;
         }
 
-        // Otherwise, push all children to stack
-        // Push them in reverse order so we process them in forward order when popping
+        // otherwise, push all children to stack in reverse order
+        // so we process them in forward order when popping
         for (int i = 7; i >= 0; i--) {
             if (stackPtr < MAX_STACK_SIZE) {
                 stack[stackPtr++] = node.firstChildIdx + i;
+            } else {
+                std::cout << "DROPPED A NODE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
             }
         }
     }
@@ -203,7 +243,7 @@ void Octree::calculateForceRecursive(int nodeIdx, const glm::vec3& position, flo
 void Octree::clear(const glm::vec3& center, float size) {
     nodes.clear();
 
-    nodes.emplace_back(OctreeNode{
+    nodes.push_back(OctreeNode{
         .centerOfMass = glm::vec3(0.0f),
         .regionCenter = center,
         .size = size,

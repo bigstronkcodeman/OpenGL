@@ -20,7 +20,7 @@ public:
     void updateNodeMasses(int nodeIdx, const std::vector<Particle>& particles);
     const std::vector<OctreeNode>& getNodes();
     void calculateForce(int particleIdx, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force);
-    void calculateForceRecursive(int nodeIdx, const glm::vec3& position, float mass, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force);
+    void calculateForceRecursive(int nodeIdx, const glm::vec3& position, const glm::vec3& velocity, float mass, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force);
     void clear(const glm::vec3& center, float size);
     void drawBoundingBoxes() const;
     void drawBoundingBox(const OctreeNode& node) const;
