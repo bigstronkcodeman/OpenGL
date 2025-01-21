@@ -16,62 +16,139 @@ Octree::Octree(const glm::vec3& center, float size) {
     });
 }
 
+struct InsertionTask {
+    int nodeIdx;
+    int particleIdx;
+    bool isExistingParticle;
+
+    InsertionTask(int nodeIdx, int particleIdx, bool isExistingParticle)
+        : nodeIdx(nodeIdx)
+        , particleIdx(particleIdx)
+        , isExistingParticle(isExistingParticle) {}
+};
+
 void Octree::insertParticle(int particleIdx, const std::vector<Particle>& particles) {
-    insertParticleRecursive(0, particleIdx, particles);
-}
+    std::vector<InsertionTask> stack;
+    stack.emplace_back(0, particleIdx, false);
 
-void Octree::insertParticleRecursive(int nodeIdx, int particleIdx, const std::vector<Particle>& particles) {
-//    OctreeNode& node = nodes[nodeIdx];
-    const Particle& particle = particles[particleIdx];
+    while (!stack.empty()) {
+        InsertionTask task = stack.back();
+        stack.pop_back();
 
-    // empty leaf node, just insert the particle
-    if (nodes[nodeIdx].firstChildIdx == -1 && nodes[nodeIdx].particleIdx == -1) {
-        nodes[nodeIdx].particleIdx = particleIdx;
-//        updateNodeMasses(nodeIdx, particles);
-        return;
-    }
+        const Particle& particle = particles[task.particleIdx];
 
-    // non-empty leaf node - we need to split it into octants and insert the new
-    // particle accordingly, as well as move the existing particle to its new child
-    if (nodes[nodeIdx].firstChildIdx == -1) {
-        int existingParticleIdx = nodes[nodeIdx].particleIdx;
-        const Particle& existingParticle = particles[existingParticleIdx];
-
-        nodes[nodeIdx].firstChildIdx = nodes.size();
-        float childSize = 0.5f * nodes[nodeIdx].size;
-
-        for (int i = 0; i < 8; i++) {
-            glm::vec3 offset = {
-                (i & 1) ? childSize : -childSize,
-                (i & 2) ? childSize : -childSize,
-                (i & 4) ? childSize : -childSize
-            };
-
-            nodes.push_back(OctreeNode{
-                .centerOfMass = glm::vec3(0.0f),
-                .regionCenter = nodes[nodeIdx].regionCenter + offset * 0.5f,
-                .size = childSize,
-                .totalMass = 0.0f,
-                .firstChildIdx = -1,
-                .particleIdx = -1
-            });
+        // empty leaf node case - just insert the particle
+        if (nodes[task.nodeIdx].firstChildIdx == -1 && nodes[task.nodeIdx].particleIdx == -1) {
+            nodes[task.nodeIdx].particleIdx = task.particleIdx;
+            continue;
         }
 
-        // node is no longer a leaf, remove its particle
-        nodes[nodeIdx].particleIdx = -1;
+        // non-empty leaf node case - need to split
+        if (nodes[task.nodeIdx].firstChildIdx == -1) {
+            int existingParticleIdx = nodes[task.nodeIdx].particleIdx;
+            const Particle& existingParticle = particles[existingParticleIdx];
 
-        // move particle to appropriate child
-        int octantForExistingParticle = getOctant(nodes[nodeIdx].regionCenter, existingParticle.position);
-        insertParticleRecursive(nodes[nodeIdx].firstChildIdx + octantForExistingParticle, existingParticleIdx, particles);
+            // create child nodes
+            nodes[task.nodeIdx].firstChildIdx = nodes.size();
+            float childSize = 0.5f * nodes[task.nodeIdx].size;
+
+            for (int i = 0; i < 8; i++) {
+                glm::vec3 offset = {
+                    (i & 1) ? childSize : -childSize,
+                    (i & 2) ? childSize : -childSize,
+                    (i & 4) ? childSize : -childSize
+                };
+
+                nodes.push_back(OctreeNode{
+                    .centerOfMass = glm::vec3(0.0f),
+                    .regionCenter = nodes[task.nodeIdx].regionCenter + offset * 0.5f,
+                    .size = childSize,
+                    .totalMass = 0.0f,
+                    .firstChildIdx = -1,
+                    .particleIdx = -1
+                });
+            }
+
+            // clear current node's particle
+            nodes[task.nodeIdx].particleIdx = -1;
+
+            // push both particles back to stack for insertion into children
+            int octantForExisting = getOctant(nodes[task.nodeIdx].regionCenter,
+                                              existingParticle.position);
+            int octantForNew = getOctant(nodes[task.nodeIdx].regionCenter,
+                                         particle.position);
+
+            // push new particle first so existing particle gets processed first
+            stack.emplace_back(nodes[task.nodeIdx].firstChildIdx + octantForNew,
+                               task.particleIdx,
+                               false);
+            stack.emplace_back(nodes[task.nodeIdx].firstChildIdx + octantForExisting,
+                            existingParticleIdx,
+                            true);
+            continue;
+        }
+
+        // non-leaf node case - just route to appropriate child
+        int octant = getOctant(nodes[task.nodeIdx].regionCenter, particle.position);
+        stack.emplace_back(nodes[task.nodeIdx].firstChildIdx + octant,
+                           task.particleIdx,
+                           task.isExistingParticle);
     }
-
-    // node is not a leaf, insert the new particle into the appropriate child
-    int octant = getOctant(nodes[nodeIdx].regionCenter, particle.position);
-    insertParticleRecursive(nodes[nodeIdx].firstChildIdx + octant, particleIdx, particles);
-
-    // update node mass to include new particle
-//    updateNodeMasses(nodeIdx, particles);
 }
+
+//void Octree::insertParticle(int particleIdx, const std::vector<Particle>& particles) {
+//    insertParticleRecursive(0, particleIdx, particles);
+//}
+//
+//void Octree::insertParticleRecursive(int nodeIdx, int particleIdx, const std::vector<Particle>& particles) {
+////    OctreeNode& node = nodes[nodeIdx];
+//    const Particle& particle = particles[particleIdx];
+//
+//    // empty leaf node, just insert the particle
+//    if (nodes[nodeIdx].firstChildIdx == -1 && nodes[nodeIdx].particleIdx == -1) {
+//        nodes[nodeIdx].particleIdx = particleIdx;
+////        updateNodeMasses(nodeIdx, particles);
+//        return;
+//    }
+//
+//    // non-empty leaf node - we need to split it into octants and insert the new
+//    // particle accordingly, as well as move the existing particle to its new child
+//    if (nodes[nodeIdx].firstChildIdx == -1) {
+//        int existingParticleIdx = nodes[nodeIdx].particleIdx;
+//        const Particle& existingParticle = particles[existingParticleIdx];
+//
+//        nodes[nodeIdx].firstChildIdx = nodes.size();
+//        float childSize = 0.5f * nodes[nodeIdx].size;
+//
+//        for (int i = 0; i < 8; i++) {
+//            glm::vec3 offset = {
+//                (i & 1) ? childSize : -childSize,
+//                (i & 2) ? childSize : -childSize,
+//                (i & 4) ? childSize : -childSize
+//            };
+//
+//            nodes.push_back(OctreeNode{
+//                .centerOfMass = glm::vec3(0.0f),
+//                .regionCenter = nodes[nodeIdx].regionCenter + offset * 0.5f,
+//                .size = childSize,
+//                .totalMass = 0.0f,
+//                .firstChildIdx = -1,
+//                .particleIdx = -1
+//            });
+//        }
+//
+//        // node is no longer a leaf, remove its particle
+//        nodes[nodeIdx].particleIdx = -1;
+//
+//        // move particle to appropriate child
+//        int octantForExistingParticle = getOctant(nodes[nodeIdx].regionCenter, existingParticle.position);
+//        insertParticleRecursive(nodes[nodeIdx].firstChildIdx + octantForExistingParticle, existingParticleIdx, particles);
+//    }
+//
+//    // node is not a leaf, insert the new particle into the appropriate child
+//    int octant = getOctant(nodes[nodeIdx].regionCenter, particle.position);
+//    insertParticleRecursive(nodes[nodeIdx].firstChildIdx + octant, particleIdx, particles);
+//}
 
 int Octree::getOctant(const glm::vec3& nodeCenter, const glm::vec3& particlePosition) {
     // encode axis position comparisons into 3-bit number where:
@@ -83,38 +160,6 @@ int Octree::getOctant(const glm::vec3& nodeCenter, const glm::vec3& particlePosi
          | (particlePosition.y >= nodeCenter.y) << 1
          | (particlePosition.z >= nodeCenter.z) << 2;
 }
-
-//void Octree::updateNodeMasses(int nodeIdx, const std::vector<Particle>& particles) {
-////    OctreeNode& node = nodes[nodeIdx];
-//
-//    if (nodes[nodeIdx].firstChildIdx == -1) {
-//        // empty leaf node, undefined total mass
-//        if (nodes[nodeIdx].particleIdx == -1) {
-//            nodes[nodeIdx].totalMass = 0.0f;
-//            return;
-//        }
-//
-//        // non-empty leaf node, just use the single particle for the
-//        // center of totalMass and total totalMass
-//        const Particle& particle = particles[nodes[nodeIdx].particleIdx];
-//        nodes[nodeIdx].centerOfMass = particle.position;
-//        nodes[nodeIdx].totalMass = particle.mass;
-//        return;
-//    }
-//
-//    // non-leaf node, need to update totalMass by accounting for all children
-//    nodes[nodeIdx].totalMass = 0.0f;
-//    nodes[nodeIdx].centerOfMass = glm::vec3(0.0f);
-//
-//    for (int i = 0; i < 8; i++) {
-//        const OctreeNode& child = nodes[nodes[nodeIdx].firstChildIdx + i];
-//        if (child.totalMass > 0.0f) {
-//            nodes[nodeIdx].centerOfMass =
-//                (nodes[nodeIdx].centerOfMass * nodes[nodeIdx].totalMass + child.centerOfMass * child.totalMass) / (nodes[nodeIdx].totalMass + child.totalMass);
-//            nodes[nodeIdx].totalMass += child.totalMass;
-//        }
-//    }
-//}
 
 void Octree::updateNodeMasses(int nodeIdx, const std::vector<Particle>& particles) {
     if (nodes[nodeIdx].firstChildIdx == -1) {
@@ -161,48 +206,47 @@ void Octree::calculateForce(int particleIdx, float theta, float softening, const
 }
 
 
-//void Octree::calculateForceRecursive(int nodeIdx, const glm::vec3& position, const glm::vec3& velocity, float mass, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force) {
-//    static constexpr float G = 6.67430e-11;
-//    static constexpr float DRAG_COEFFICIENT = 0.001f;
-//
-//    // node has no particles within and contributes no force, skip
-//    if (nodes[nodeIdx].totalMass == 0.0f) {
-//        return;
-//    }
-//
-//    glm::vec3 dragForce = -DRAG_COEFFICIENT * velocity;
-//
-//    // get distance to node's center of mass
-//    glm::vec3 r = nodes[nodeIdx].centerOfMass - position;
-//    float distSquared = glm::dot(r, r) + softening;
-//
-//    // avoid calculating forces between a particle and itself
-//    if (distSquared == softening) {
-//        return;
-//    }
-//
-//    // if the node is an internal node and is far enough away,
-//    // calculate the force using the internal node's total mass and center of mass
-//    // (i.e., approximate this group as a single point mass)
-//    if (nodes[nodeIdx].firstChildIdx == -1 || (nodes[nodeIdx].size * nodes[nodeIdx].size) / distSquared < theta * theta) {
-//        force += (glm::normalize(r) * G * mass * nodes[nodeIdx].totalMass / distSquared) + dragForce;
-//        return;
-//    }
-//
-//    // otherwise, recursively calculate forces from children
-//    for (int i = 0; i < 8; i++) {
-//        calculateForceRecursive(nodes[nodeIdx].firstChildIdx + i, position, velocity, mass, theta, softening, particles, force);
-//    }
-//}
-
 void Octree::calculateForceRecursive(int nodeIdx, const glm::vec3& position, const glm::vec3& velocity, float mass, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force) {
     static constexpr float G = 6.67430e-11;
-    static constexpr float DRAG_COEFFICIENT = 0.001f;
+    static constexpr float DRAG_COEFFICIENT = 0.01f;
+
+    // node has no particles within and contributes no force, skip
+    if (nodes[nodeIdx].totalMass == 0.0f) {
+        return;
+    }
+
+    glm::vec3 dragForce = -DRAG_COEFFICIENT * velocity;
+
+    // get distance to node's center of mass
+    glm::vec3 r = nodes[nodeIdx].centerOfMass - position;
+    float distSquared = glm::dot(r, r) + softening;
+
+    // avoid calculating forces between a particle and itself
+    if (distSquared == softening) {
+        return;
+    }
+
+    // if the node is an internal node and is far enough away,
+    // calculate the force using the internal node's total mass and center of mass
+    // (i.e., approximate this group as a single point mass)
+    if (nodes[nodeIdx].firstChildIdx == -1 || (nodes[nodeIdx].size * nodes[nodeIdx].size) / distSquared < theta * theta) {
+        force += (glm::normalize(r) * G * mass * nodes[nodeIdx].totalMass / distSquared) + dragForce;
+        return;
+    }
+
+    // otherwise, recursively calculate forces from children
+    for (int i = 0; i < 8; i++) {
+        calculateForceRecursive(nodes[nodeIdx].firstChildIdx + i, position, velocity, mass, theta, softening, particles, force);
+    }
+}
+
+void Octree::calculateForceIterative(int nodeIdx, const glm::vec3& position, const glm::vec3& velocity, float mass, float theta, float softening, const std::vector<Particle>& particles, glm::vec3& force) {
+    static constexpr float G = 6.67430e-12;
+    static constexpr float DRAG_COEFFICIENT = 0.005f;
     static constexpr int MAX_STACK_SIZE = 100;
     int stack[MAX_STACK_SIZE];
     int stackPtr = 0;
 
-    // start with root
     stack[stackPtr++] = nodeIdx;
 
     force += -DRAG_COEFFICIENT * velocity;

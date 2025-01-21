@@ -18,7 +18,7 @@ layout(std430, binding = 1) buffer ParticleBufferOut {
 };
 
 uniform float deltaTime;
-const float G = 6.67430e-11;
+const float G = 6.67430e-10;
 const float softening = 0.02;
 const float drag = 0.001;
 

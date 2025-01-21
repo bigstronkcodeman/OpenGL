@@ -81,8 +81,8 @@ GLFWwindow* initializeGlfwWindow() {
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-//    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+//     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
@@ -143,12 +143,12 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // rotate camera continually around origin
-//        glm::vec3 cameraPos(5.0f * std::cos(camera.yaw), 0.0f, 5.0f * std::sin(camera.yaw));
-//        camera.position = cameraPos;
-//        camera.forward = -glm::normalize(cameraPos);
-//        camera.right = glm::normalize(glm::cross(camera.forward, camera.worldUp));
-//        camera.up = glm::cross(camera.right, camera.forward);
-//        camera.yaw += .01f;
+        glm::vec3 cameraPos(3.0f * std::cos(camera.yaw), 0.0f, 3.0f * std::sin(camera.yaw));
+        camera.position = cameraPos;
+        camera.forward = -glm::normalize(cameraPos);
+        camera.right = glm::normalize(glm::cross(camera.forward, camera.worldUp));
+        camera.up = glm::cross(camera.right, camera.forward);
+        camera.yaw += .01f;
 
         // create transformations
         glm::mat4 view = camera.getViewTransform();
